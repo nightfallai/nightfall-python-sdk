@@ -1,0 +1,22 @@
+Changelog
+=========
+
+Here you can see the full list of changes between each Nightfall release.
+
+Version 0.1.0
+-------------
+
+.. note::
+    This is an initial Beta release.
+    
+Released on June 13, 2021
+
+- Basic project tooling put into place.
+    - Continuous Integration with GitHub Actions
+    - Packaging and uploading to PyPI
+    - Code Coverage
+    - Testing with unittest
+- Basic Documentation in place
+- Add support for using the API with a token
+- Add support for scan API endpoint
+
