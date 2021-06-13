@@ -16,7 +16,7 @@ def readme():
 
 setup(
     name="nightfall",
-    version="0.1.4dev",
+    version="0.1.0",
     description="Python SDK for Nightfall",
     long_description=readme(),
     long_description_content_type="text/markdown",

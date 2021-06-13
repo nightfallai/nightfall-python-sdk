@@ -21,5 +21,4 @@ class TestNightfallApi(unittest.TestCase):
         """Test basics of API, can submit a request and receive a response."""
         resp = self.client.scan(['testing'])
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.json(), None)
         
