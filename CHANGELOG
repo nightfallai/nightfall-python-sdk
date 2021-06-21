@@ -6,7 +6,7 @@ Here you can see the full list of changes between each Nightfall release.
 Version 0.4.0
 -------------
 
-UNRELEASED
+Released on June 20, 2021
 
 - Add debug logs to Nightfall module
 - Change primary class name from ``Api`` to ``Nightfall`` to make things a bit 

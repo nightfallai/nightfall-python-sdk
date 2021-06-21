@@ -16,11 +16,11 @@ def readme():
 
 setup(
     name="nightfall",
-    version="0.3.0",
+    version="0.4.0",
     description="Python SDK for Nightfall",
     long_description=readme(),
     long_description_content_type="text/markdown",
-    url="https://github.com/levlaz/nightfall-python-sdk",
+    url="https://github.com/nightfallai/nightfall-python-sdk",
     author="Nightfall",
     author_email="support@nightfall.ai",
     license="MIT",
