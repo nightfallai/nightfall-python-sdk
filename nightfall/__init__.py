@@ -7,3 +7,4 @@ nightfall module
     :copyright: (c) 2021 Nightfall
     :license: MIT, see LICENSE for more details.
 """
+from .api import Nightfall

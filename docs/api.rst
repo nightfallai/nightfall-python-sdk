@@ -1,8 +1,8 @@
 API
 ===
 
-API Object
-----------
+Nightfall Object
+----------------
 
 .. automodule:: nightfall.api
     :members:

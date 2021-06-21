@@ -8,7 +8,14 @@ Version 0.4.0
 
 UNRELEASED
 
-- Add debug logs to API module
+- Add debug logs to Nightfall module
+- Change primary class name from ``Api`` to ``Nightfall`` to make things a bit 
+  more clear when this library is used in other programs and allow ``from 
+  nightfall import Nightfall``
+
+.. warning::
+    This is a breaking change, since the previous version of this SDK
+    imported Nightfall using ``from nightfall.api import Api``
 
 Version 0.3.0
 -------------

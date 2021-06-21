@@ -15,17 +15,16 @@ pip install nightfall
 Make a new [API Token](https://app.nightfall.ai/api/) and [Detection Rule Set](https://app.nightfall.ai/detection-engine/detection-rules) in Nightfall and store the values as environment variables.
 
 ```
-from nightfall import Api
+from nightfall import Nightfall
 
-nightfall = Api(
+nightfall = Nightfall(
     os.getenv('NIGHTFALL_TOKEN'),
     os.getenv('NIGHTFALL_CONDITION_SET')
     )
 
 response = nightfall.scan(['test string'])
 
-findings = response.json()
-print(findings)
+print(response)
 ```
 
 ## Contributing

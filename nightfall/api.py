@@ -10,7 +10,7 @@ import json
 import requests
 import logging
 
-class Api():
+class Nightfall():
     """A python interface for the Nightfall API.
 
     .. data:: MAX_PAYLOAD_SIZE 
@@ -25,7 +25,7 @@ class Api():
     MAX_NUM_ITEMS = 50_000
 
     def __init__(self, token, condition_set):
-        """Instantiate a new nightfall.Api object.
+        """Instantiate a new Nightfall object.
 
         :param token: Your Nightfall API token.
         :param condition_set: Your Nightfall Condition Set UUID
@@ -117,6 +117,3 @@ class Api():
             responses += response.json()
         
         return responses
-
-
-
