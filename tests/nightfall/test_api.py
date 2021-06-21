@@ -3,12 +3,12 @@ import os
 import unittest
 import requests
 
-from nightfall.api import Api
+from nightfall.api import Nightfall
 
 class TestNightfallApi(unittest.TestCase):
 
     def setUp(self):
-        self.client = Api(
+        self.client = Nightfall(
             os.getenv('NIGHTFALL_TOKEN'),
             os.getenv('NIGHTFALL_CONDITION_SET')
             )

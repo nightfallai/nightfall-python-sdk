@@ -10,7 +10,7 @@ import json
 import requests
 import logging
 
-class Api():
+class Nightfall():
     """A python interface for the Nightfall API.
 
     .. data:: MAX_PAYLOAD_SIZE 
@@ -25,7 +25,7 @@ class Api():
     MAX_NUM_ITEMS = 50_000
 
     def __init__(self, token, condition_set):
-        """Instantiate a new nightfall.Api object.
+        """Instantiate a new Nightfall object.
 
         :param token: Your Nightfall API token.
         :param condition_set: Your Nightfall Condition Set UUID
@@ -37,6 +37,8 @@ class Api():
             'Content-Type': 'application/json',
             'x-api-key': self.token
         }
+        self.logger = logging.getLogger(__name__)
+
 
     def make_payloads(self, data):
         """Turn a list of strings into a list of acceptable payloads.
@@ -101,10 +103,17 @@ class Api():
                 headers=self._headers,
                 data=json.dumps(payload)
             )
+
+            # Logs for Debugging
+            self.logger.debug(f"HTTP Request URL: {response.request.url}")
+            self.logger.debug(f"HTTP Request Body: {response.request.body}")
+            self.logger.debug(f"HTTP Request Headers: {response.request.headers}")
+
+            self.logger.debug(f"HTTP Status Code: {response.status_code}")
+            self.logger.debug(f"HTTP Response Headers: {response.headers}")
+            self.logger.debug(f"HTTP Response Text: {response.text}")
+
             response.raise_for_status()
             responses += response.json()
         
         return responses
-
-
-
