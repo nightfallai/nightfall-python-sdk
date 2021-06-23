@@ -9,6 +9,8 @@ Version 0.5.0
 UNRELEASED
 
 - Publish Sphinx docs to GitHub pages
+- Fix bug in chunking algorithm where a single item larger than the 
+  MAX_PAYLOAD_SIZE was not being split up properly. 
 
 Version 0.4.0
 -------------

@@ -21,11 +21,11 @@ class TestNightfallApi(unittest.TestCase):
         resp = self.client.scan(['testing'])
         self.assertEqual(resp[0], None)
 
-    def testChunking(self):
-        """Test chunking algorithm."""
-
-        # a list of 10 strings that are 100k bytes each should turn into a 
-        # list of three lists
+    def testChunkingBitItemList(self):
+        """
+        a list of 10 strings that are 100k bytes each should turn into a 
+        list of three lists
+        """
         large_list = []
         large_string = "x" * 100000
 
@@ -35,10 +35,22 @@ class TestNightfallApi(unittest.TestCase):
         chunks = self.client.make_payloads(large_list)
         self.assertEqual(len(chunks), 3)
 
-        # a list of 100,000 single byte items should turn into two lists
+    def testChunkingManyItemsList(self):
+        """
+        a list of 100,000 single byte items should turn into two lists
+        """
         many_list = []
         for i in range(0, 100000):
             many_list.append('x')
 
         chunks = self.client.make_payloads(many_list)
+        self.assertEqual(len(chunks), 2)
+
+    def testChunkingHugeItemList(self):
+        """A a single 600kb string should return two lists"""
+        large_item_list = []
+        huge_string = "x" * 600000
+        large_item_list.append(huge_string)
+
+        chunks = self.client.make_payloads(large_item_list)
         self.assertEqual(len(chunks), 2)
