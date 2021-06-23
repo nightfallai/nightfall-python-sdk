@@ -29,6 +29,6 @@ Import Nightfall and start using methods:
         os.getenv('NIGHTFALL_CONDITION_SET')
         )
 
-    response = nightfall.scan(['test string'])
+    response = nightfall.scan([{'id': 'test string'}])
 
     print(response)    

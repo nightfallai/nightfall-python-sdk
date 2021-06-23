@@ -10,6 +10,7 @@ import json
 import requests
 import logging
 
+
 class Nightfall():
     """A python interface for the Nightfall API.
 
@@ -41,33 +42,41 @@ class Nightfall():
 
 
     def make_payloads(self, data):
-        """Turn a list of strings into a list of acceptable payloads.
+        """Turn a list of dicts ``[{'id': 'string'}]`` into a list of
+        acceptable payloads.
 
-        Creates chunks based on the MAX_PAYLOAD_SIZE and MAX_NUM_ITEMS 
+        Creates chunks based on the ``MAX_PAYLOAD_SIZE`` and ``MAX_NUM_ITEMS`` 
         constants.
 
-        :param data: list of string
-        :returns: list of list of strings
+        :param data: list of dicts
+        :type data: list
+
+        :returns: list of list of dicts
         """
         cur_chunk_bytes = 0
         cur_chunk = []
         chunks = []
 
-        for i in data:
-            if cur_chunk_bytes + len(i) >= self.MAX_PAYLOAD_SIZE or \
-                len(cur_chunk) >= self.MAX_NUM_ITEMS:
-                if cur_chunk:
-                    chunks.append(cur_chunk)
-                cur_chunk_bytes = len(i)
-                if len(i) < self.MAX_PAYLOAD_SIZE:
-                    cur_chunk = [i]
+        for item in data:
+            for k,v in item.items():
+                if cur_chunk_bytes + len(v) >= self.MAX_PAYLOAD_SIZE or \
+                    len(cur_chunk) >= self.MAX_NUM_ITEMS:
+                    if cur_chunk:
+                        chunks.append(cur_chunk)
+                    cur_chunk_bytes = len(v)
+                    if len(v) < self.MAX_PAYLOAD_SIZE:
+                        cur_chunk = [item]
+                    else:
+                        cur_chunk = []
+                        # TODO handle edge case where we miss sensitive data
+                        # because we happen to split the string in the middle
+                        # and the two parts independently do not trigger a 
+                        # finding.
+                        for j in range(0, len(v), self.MAX_PAYLOAD_SIZE):
+                            chunks.append([{ k: v[j:j+self.MAX_PAYLOAD_SIZE]}])
                 else:
-                    cur_chunk = []
-                    for j in range(0, len(i), self.MAX_PAYLOAD_SIZE):
-                        chunks.append([i[j:j+self.MAX_PAYLOAD_SIZE]])
-            else:
-                cur_chunk.append(i)
-                cur_chunk_bytes += len(i)
+                    cur_chunk.append(item)
+                    cur_chunk_bytes += len(v)
         if cur_chunk:
             chunks.append(cur_chunk)
 
@@ -81,16 +90,40 @@ class Nightfall():
         and then makes one or more requests to the Nightfall API to scan the 
         data.
 
-        :param data: list of strings to scan.
+        :param data: list of dicts to scan.
         :type data: list
 
-        :returns: list of list of resposes for items in payload.
+        data dicts should be in the following format: 
+
+        ::
+        
+            {
+                "id123": "string_to_scan"
+            }
+
+        Where the key is a reference to where the string came from, and the
+        value is the string that you wish to scan.
+
+        :returns: list of list of dicts for items in payload.
+
+        response dicts are in the form of:
+
+        ::
+
+            {
+                "id123": [{nightfall_findings},] or None
+            }
         """
         responses = []
 
         for i in self.make_payloads(data):
-            payload = {
-                'payload': i,
+
+            payload = []
+            for d in i:
+                payload.append([v for k,v in d.items()][0])
+
+            data = {
+                'payload': payload,
                 'config': {
                     'conditionSetUUID': self.condition_set
                 }
@@ -99,7 +132,7 @@ class Nightfall():
             response = requests.post(
                 url=self._url,
                 headers=self._headers,
-                data=json.dumps(payload)
+                data=json.dumps(data)
             )
 
             # Logs for Debugging
@@ -112,6 +145,15 @@ class Nightfall():
             self.logger.debug(f"HTTP Response Text: {response.text}")
 
             response.raise_for_status()
-            responses += response.json()
-        
+            findings = response.json()
+
+            for idx, d in enumerate(i):
+                for k,v in d.items():
+                    if findings[idx] is not None:
+                        responses.append({
+                            k: json.dumps(findings[idx])
+                        })
+                    else:
+                        responses.append({k: None})
+
         return responses

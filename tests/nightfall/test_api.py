@@ -4,53 +4,87 @@ import unittest
 import requests
 
 from nightfall.api import Nightfall
+from unittest.mock import MagicMock
 
 class TestNightfallApi(unittest.TestCase):
 
     def setUp(self):
         self.client = Nightfall(
-            os.getenv('NIGHTFALL_TOKEN'),
-            os.getenv('NIGHTFALL_CONDITION_SET')
+            'mock_token',
+            'mock_condition_set'
             )
-    
-    def testScan(self):
-        """Test basics of API, can submit a request and receive a response.
-        
-        This test assumes that you don't have a condition set matching the 'testing' string.
-        """
-        resp = self.client.scan(['testing'])
-        self.assertEqual(resp[0], None)
 
-    def testChunkingBitItemList(self):
+    def loadMock(self, filename):
+        """helper function to open mock responses"""
+        filename = f"tests/mocks/{filename}"
+
+        with open(filename, 'r') as f:
+            self.client.scan = MagicMock(return_value=f.read())
+
+    def test_scan(self):
+        """basic test of scan function, uses mock response."""
+        self.loadMock('mock_single_finding_response')
+
+        resp = json.loads(self.client.scan(["th1Sisaf4k34p1k3y"]))
+
+        self.assertEqual(resp["fragment"], "th1Sisaf4k34p1k3y")
+
+
+    def test_chunking_big_item_list(self):
         """
-        a list of 10 strings that are 100k bytes each should turn into a 
+        a list of 10 dicts that are 100k bytes each should turn into a 
         list of three lists
         """
         large_list = []
-        large_string = "x" * 100000
 
         for i in range(0,10):
-            large_list.append(large_string)
+            large_list.append({
+                f"id{i}": "x" * 100000
+            })
         
         chunks = self.client.make_payloads(large_list)
+
+        for c in chunks:
+            self.assertTrue(len(c) <= self.client.MAX_NUM_ITEMS)
+            for i in c:
+                for k,v in i.items():
+                    self.assertTrue(len(v) <= self.client.MAX_PAYLOAD_SIZE)
+
         self.assertEqual(len(chunks), 3)
 
-    def testChunkingManyItemsList(self):
+    def test_chunking_many_items_list(self):
         """
         a list of 100,000 single byte items should turn into two lists
         """
         many_list = []
         for i in range(0, 100000):
-            many_list.append('x')
+            many_list.append({
+                f"id{i}": "x"
+            })
 
         chunks = self.client.make_payloads(many_list)
+
+        for c in chunks:
+            self.assertTrue(len(c) <= self.client.MAX_NUM_ITEMS)
+            for i in c:
+                for k,v in i.items():
+                    self.assertTrue(len(v) <= self.client.MAX_PAYLOAD_SIZE)
+
         self.assertEqual(len(chunks), 2)
 
-    def testChunkingHugeItemList(self):
-        """A a single 600kb string should return two lists"""
+    def test_chunking_huge_item_list(self):
+        """A a single 600kb string should return two lists with the same key"""
         large_item_list = []
-        huge_string = "x" * 600000
-        large_item_list.append(huge_string)
+        large_item_list.append({
+            "id": "x" * 600000
+        })
 
         chunks = self.client.make_payloads(large_item_list)
         self.assertEqual(len(chunks), 2)
+
+        for c in chunks:
+            self.assertTrue(len(c) <= self.client.MAX_NUM_ITEMS)
+            for i in c:
+                for k,v in i.items():
+                    self.assertTrue(len(v) <= self.client.MAX_PAYLOAD_SIZE)
+                    self.assertEqual(k, "id")
