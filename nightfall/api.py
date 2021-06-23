@@ -62,6 +62,7 @@ class Nightfall():
                 if len(i) < self.MAX_PAYLOAD_SIZE:
                     cur_chunk = [i]
                 else:
+                    cur_chunk = []
                     for j in range(0, len(i), self.MAX_PAYLOAD_SIZE):
                         chunks.append([i[j:j+self.MAX_PAYLOAD_SIZE]])
             else:
