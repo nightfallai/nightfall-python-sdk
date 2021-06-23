@@ -1,0 +1,292 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>API &mdash; Nightfall  documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Changelog" href="changelog.html" />
+    <link rel="prev" title="Quickstart" href="quickstart.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Nightfall
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-nightfall.api">Nightfall Object</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#nightfall-api">nightfall.api</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Nightfall</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>API</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/api.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="api">
+<h1>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-nightfall.api">
+<span id="nightfall-object"></span><h2>Nightfall Object<a class="headerlink" href="#module-nightfall.api" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="nightfall-api">
+<h3>nightfall.api<a class="headerlink" href="#nightfall-api" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><p>This module provides a class which abstracts the Nightfall REST API.</p>
+</div></blockquote>
+<dl class="py class">
+<dt class="sig sig-object py" id="nightfall.api.Nightfall">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">nightfall.api.</span></span><span class="sig-name descname"><span class="pre">Nightfall</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">token</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">condition_set</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#nightfall.api.Nightfall" title="Permalink to this definition">¶</a></dt>
+<dd><p>A python interface for the Nightfall API.</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="nightfall.api.Nightfall.MAX_PAYLOAD_SIZE">
+<span class="sig-name descname"><span class="pre">MAX_PAYLOAD_SIZE</span></span><a class="headerlink" href="#nightfall.api.Nightfall.MAX_PAYLOAD_SIZE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum payload size that the Nightfall API will accept</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="nightfall.api.Nightfall.MAX_NUM_ITEMS">
+<span class="sig-name descname"><span class="pre">MAX_NUM_ITEMS</span></span><a class="headerlink" href="#nightfall.api.Nightfall.MAX_NUM_ITEMS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum number of items that the Nightfall API will accept</p>
+</dd></dl>
+
+<p>Instantiate a new Nightfall object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>token</strong> – Your Nightfall API token.</p></li>
+<li><p><strong>condition_set</strong> – Your Nightfall Condition Set UUID</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="nightfall.api.Nightfall.make_payloads">
+<span class="sig-name descname"><span class="pre">make_payloads</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#nightfall.api.Nightfall.make_payloads" title="Permalink to this definition">¶</a></dt>
+<dd><p>Turn a list of strings into a list of acceptable payloads.</p>
+<p>Creates chunks based on the MAX_PAYLOAD_SIZE and MAX_NUM_ITEMS 
+constants.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>data</strong> – list of string</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>list of list of strings</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="nightfall.api.Nightfall.scan">
+<span class="sig-name descname"><span class="pre">scan</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#nightfall.api.Nightfall.scan" title="Permalink to this definition">¶</a></dt>
+<dd><p>Scan lists of data with Nightfall.</p>
+<p>This method will convert the list of strings into chunks if necessary 
+and then makes one or more requests to the Nightfall API to scan the 
+data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>list</em>) – list of strings to scan.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>list of list of resposes for items in payload.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="changelog.html" class="btn btn-neutral float-right" title="Changelog" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="quickstart.html" class="btn btn-neutral float-left" title="Quickstart" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Nightfall.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

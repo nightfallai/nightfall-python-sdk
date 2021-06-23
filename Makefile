@@ -16,10 +16,11 @@ dev:
 	pip install -e .
 
 docs:
-	$(MAKE) -C docs html
+	$(MAKE) -C docsrc html
+	@cp -a docsrc/_build/html/. docs
 
 serve-docs:
-	python3 -m http.server --directory docs/_build/html
+	python3 -m http.server --directory docs
 
 package:
 	python -m build --sdist --wheel --outdir dist/
