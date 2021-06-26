@@ -62,7 +62,7 @@ class Nightfall():
 
         :returns: list skipped dicts, list of list of dicts to scan
         """
-        err_value = f"ERROR: Unable to scan string larger" \
+        err_value = f"ERROR: Unable to scan string larger " \
             f"than {self.MAX_PAYLOAD_SIZE} KB"
 
         cur_chunk_bytes = 0
