@@ -16,7 +16,7 @@ class Nightfall():
 
     .. data:: MAX_PAYLOAD_SIZE 
 
-        Maximum payload size that the Nightfall API will accept 
+        Maximum payload size in bytes that the Nightfall API will accept 
 
     .. data:: MAX_NUM_ITEMS
 
@@ -40,7 +40,6 @@ class Nightfall():
         }
         self.logger = logging.getLogger(__name__)
 
-
     def make_payloads(self, data):
         """Turn a list of dicts ``[{'id': 'string'},]`` into a list of
         acceptable payloads.
@@ -63,7 +62,7 @@ class Nightfall():
         :returns: list skipped dicts, list of list of dicts to scan
         """
         err_value = f"ERROR: Unable to scan string larger " \
-            f"than {self.MAX_PAYLOAD_SIZE} KB"
+            f"than {self.MAX_PAYLOAD_SIZE} bytes."
 
         cur_chunk_bytes = 0
         cur_chunk = []
@@ -71,9 +70,9 @@ class Nightfall():
         skipped = []
 
         for item in data:
-            for k,v in item.items():
+            for k, v in item.items():
                 if cur_chunk_bytes + len(v) >= self.MAX_PAYLOAD_SIZE or \
-                    len(cur_chunk) >= self.MAX_NUM_ITEMS:
+                        len(cur_chunk) >= self.MAX_NUM_ITEMS:
                     if cur_chunk:
                         chunks.append(cur_chunk)
                         cur_chunk = []
@@ -90,7 +89,6 @@ class Nightfall():
 
         return skipped, chunks
 
-
     def scan(self, data):
         """Scan lists of data with Nightfall.
 
@@ -104,7 +102,7 @@ class Nightfall():
         data dicts should be in the following format: 
 
         ::
-        
+
             {
                 "id123": "string_to_scan"
             }
@@ -131,10 +129,10 @@ class Nightfall():
         skipped, chunks = self.make_payloads(data)
 
         for chunk in chunks:
-            
+
             payload = []
             for item in chunk:
-                payload.append([v for k,v in item.items()][0])
+                payload.append([v for k, v in item.items()][0])
 
             data = {
                 'payload': payload,
@@ -152,7 +150,8 @@ class Nightfall():
             # Logs for Debugging
             self.logger.debug(f"HTTP Request URL: {response.request.url}")
             self.logger.debug(f"HTTP Request Body: {response.request.body}")
-            self.logger.debug(f"HTTP Request Headers: {response.request.headers}")
+            self.logger.debug(
+                f"HTTP Request Headers: {response.request.headers}")
 
             self.logger.debug(f"HTTP Status Code: {response.status_code}")
             self.logger.debug(f"HTTP Response Headers: {response.headers}")
@@ -162,7 +161,7 @@ class Nightfall():
             findings = response.json()
 
             for idx, d in enumerate(chunk):
-                for k,v in d.items():
+                for k, v in d.items():
                     if findings[idx] is not None:
                         responses.append({
                             k: json.dumps(findings[idx])
