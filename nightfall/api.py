@@ -164,7 +164,7 @@ class Nightfall():
                 for k, v in d.items():
                     if findings[idx] is not None:
                         responses.append({
-                            k: json.dumps(findings[idx])
+                            k: findings[idx]
                         })
                     else:
                         responses.append({k: None})
