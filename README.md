@@ -2,6 +2,9 @@
 
 This is a python SDK for working with the Nightfall API.
 
+[![PyPI version](https://badge.fury.io/py/nightfall.svg)](https://badge.fury.io/py/nightfall)
+
+
 ## Installation 
 
 This module requires Python 3.6 or higher.
@@ -27,6 +30,8 @@ response = nightfall.scan([{'id': 'test string'}])
 print(response)
 ```
 
+For more information on the details of this library, please refer to 
+the [SDK Documentation](https://nightfallai.github.io/nightfall-python-sdk/).
 ## Contributing
 
 Please create an issue with a description of your problem, or open a pull request with the fix. 
