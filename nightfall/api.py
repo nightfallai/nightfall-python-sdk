@@ -76,6 +76,7 @@ class Nightfall():
                     len(cur_chunk) >= self.MAX_NUM_ITEMS:
                     if cur_chunk:
                         chunks.append(cur_chunk)
+                        cur_chunk = []
                     cur_chunk_bytes = len(v)
                     if len(v) <= self.MAX_PAYLOAD_SIZE:
                         cur_chunk = [item]
