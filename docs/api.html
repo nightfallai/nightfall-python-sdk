@@ -205,16 +205,24 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="nightfall.api.Nightfall.make_payloads">
 <span class="sig-name descname"><span class="pre">make_payloads</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#nightfall.api.Nightfall.make_payloads" title="Permalink to this definition">¶</a></dt>
-<dd><p>Turn a list of dicts <code class="docutils literal notranslate"><span class="pre">[{'id':</span> <span class="pre">'string'}]</span></code> into a list of
+<dd><p>Turn a list of dicts <code class="docutils literal notranslate"><span class="pre">[{'id':</span> <span class="pre">'string'},]</span></code> into a list of
 acceptable payloads.</p>
 <p>Creates chunks based on the <code class="docutils literal notranslate"><span class="pre">MAX_PAYLOAD_SIZE</span></code> and <code class="docutils literal notranslate"><span class="pre">MAX_NUM_ITEMS</span></code> 
 constants.</p>
+<p>When the number of items in a list is greater than <code class="docutils literal notranslate"><span class="pre">MAX_NUM_ITEMS</span></code> 
+we will split the list into multiple lists. When the total sum of all 
+strings in a list is greater than <code class="docutils literal notranslate"><span class="pre">MAX_PAYLOAD_SIZE</span></code>, we will split 
+that list into multiple lists. In the case where an individual item is 
+greater than <code class="docutils literal notranslate"><span class="pre">MAX_PAYLOAD_SIZE</span></code>, we add it to a list of skipped items.
+We will not scan this item via the API and instead return information 
+to the user letting them know that the API does not accept individual 
+payloads greater than <code class="docutils literal notranslate"><span class="pre">MAX_PAYLOAD_SIZE</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>data</strong> (<em>list</em>) – list of dicts</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>list of list of dicts</p>
+<dd class="field-even"><p>list skipped dicts, list of list of dicts to scan</p>
 </dd>
 </dl>
 </dd></dl>
@@ -223,7 +231,7 @@ constants.</p>
 <dt class="sig sig-object py" id="nightfall.api.Nightfall.scan">
 <span class="sig-name descname"><span class="pre">scan</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#nightfall.api.Nightfall.scan" title="Permalink to this definition">¶</a></dt>
 <dd><p>Scan lists of data with Nightfall.</p>
-<p>This method will convert the list of strings into chunks if necessary 
+<p>This method will convert the list of dicts into chunks if necessary 
 and then makes one or more requests to the Nightfall API to scan the 
 data.</p>
 <dl class="field-list simple">
@@ -238,7 +246,8 @@ data.</p>
 </pre></div>
 </div>
 <p>Where the key is a reference to where the string came from, and the
-value is the string that you wish to scan.</p>
+value is the string that you wish to scan. The keys is not scanned
+and is not considered sensitive.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p>list of list of dicts for items in payload.</p>
@@ -250,6 +259,9 @@ value is the string that you wish to scan.</p>
 <span class="p">}</span>
 </pre></div>
 </div>
+<p>The final response will include any items that may have been skipped
+due to API size limitations. This is added after all findings have been
+processed.</p>
 </dd></dl>
 
 </dd></dl>

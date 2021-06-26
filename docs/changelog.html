@@ -175,10 +175,10 @@
 <p>UNRELEASED</p>
 <ul class="simple">
 <li><p>Publish Sphinx docs to GitHub pages</p></li>
-<li><p>Fix bug in chunking algorithm where a single item larger than the
-MAX_PAYLOAD_SIZE was not being split up properly.</p></li>
 <li><p>Split up unit and integration tests, use mocking for unit tests</p></li>
 <li><p>Update scan and chunking method to scan strings from a dict</p></li>
+<li><p>Stop attempting to split strings and instead return an error to the user</p></li>
+<li><p>Redefine <code class="docutils literal notranslate"><span class="pre">MAX_PAYLOAD_SIZE</span></code> constant to be actual max of 500_000 bytes</p></li>
 </ul>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
