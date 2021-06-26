@@ -32,17 +32,17 @@ class TestNightfallApi(unittest.TestCase):
 
     def test_chunking_big_item_list(self):
         """
-        a list of 10 dicts that are 100k bytes each should turn into a 
-        list of three lists
+        a list of 10 dicts that are 500KB each should turn into a 
+        list of 10 lists
         """
         large_list = []
 
         for i in range(0,10):
             large_list.append({
-                f"id{i}": "x" * 100000
+                f"id{i}": "x" * 500000
             })
         
-        chunks = self.client.make_payloads(large_list)
+        skipped, chunks = self.client.make_payloads(large_list)
 
         for c in chunks:
             self.assertTrue(len(c) <= self.client.MAX_NUM_ITEMS)
@@ -50,7 +50,8 @@ class TestNightfallApi(unittest.TestCase):
                 for k,v in i.items():
                     self.assertTrue(len(v) <= self.client.MAX_PAYLOAD_SIZE)
 
-        self.assertEqual(len(chunks), 3)
+        self.assertEqual(len(chunks), 10)
+        self.assertEqual(len(skipped), 0)
 
     def test_chunking_many_items_list(self):
         """
@@ -62,7 +63,7 @@ class TestNightfallApi(unittest.TestCase):
                 f"id{i}": "x"
             })
 
-        chunks = self.client.make_payloads(many_list)
+        skipped, chunks = self.client.make_payloads(many_list)
 
         for c in chunks:
             self.assertTrue(len(c) <= self.client.MAX_NUM_ITEMS)
@@ -71,16 +72,19 @@ class TestNightfallApi(unittest.TestCase):
                     self.assertTrue(len(v) <= self.client.MAX_PAYLOAD_SIZE)
 
         self.assertEqual(len(chunks), 2)
+        self.assertEqual(len(skipped), 0)
 
     def test_chunking_huge_item_list(self):
-        """A a single 600kb string should return two lists with the same key"""
+        """A a single 600kb string should be skipped"""
         large_item_list = []
         large_item_list.append({
             "id": "x" * 600000
         })
 
-        chunks = self.client.make_payloads(large_item_list)
-        self.assertEqual(len(chunks), 2)
+        skipped, chunks = self.client.make_payloads(large_item_list)
+        self.assertEqual(len(chunks), 0)
+        self.assertEqual(len(skipped), 1)
+        self.assertEqual("id+skipped", list(skipped[0].keys())[0])
 
         for c in chunks:
             self.assertTrue(len(c) <= self.client.MAX_NUM_ITEMS)

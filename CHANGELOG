@@ -9,10 +9,10 @@ Version 0.5.0
 UNRELEASED
 
 - Publish Sphinx docs to GitHub pages
-- Fix bug in chunking algorithm where a single item larger than the 
-  MAX_PAYLOAD_SIZE was not being split up properly. 
 - Split up unit and integration tests, use mocking for unit tests
 - Update scan and chunking method to scan strings from a dict
+- Stop attempting to split strings and instead return an error to the user
+- Redefine ``MAX_PAYLOAD_SIZE`` constant to be actual max of 500_000 bytes
 
 .. warning::
     Scanning dicts instead of strings is a breaking change. Previous versions
