@@ -33,7 +33,7 @@ class TestNightfallApi(unittest.TestCase):
     def test_chunking_big_item_list(self):
         """
         a list of 10 dicts that are 500KB each should turn into a 
-        list of 10 lists
+        list of 10 lists with one item per list
         """
         large_list = []
 
@@ -46,6 +46,7 @@ class TestNightfallApi(unittest.TestCase):
 
         for c in chunks:
             self.assertTrue(len(c) <= self.client.MAX_NUM_ITEMS)
+            self.assertEqual(len(c), 1)
             for i in c:
                 for k,v in i.items():
                     self.assertTrue(len(v) <= self.client.MAX_PAYLOAD_SIZE)
@@ -55,7 +56,8 @@ class TestNightfallApi(unittest.TestCase):
 
     def test_chunking_many_items_list(self):
         """
-        a list of 100,000 single byte items should turn into two lists
+        a list of 100,000 single byte items should turn into two lists with 
+        50,000 items in each list.
         """
         many_list = []
         for i in range(0, 100000):
@@ -67,6 +69,7 @@ class TestNightfallApi(unittest.TestCase):
 
         for c in chunks:
             self.assertTrue(len(c) <= self.client.MAX_NUM_ITEMS)
+            self.assertEqual(len(c), 50000)
             for i in c:
                 for k,v in i.items():
                     self.assertTrue(len(v) <= self.client.MAX_PAYLOAD_SIZE)
