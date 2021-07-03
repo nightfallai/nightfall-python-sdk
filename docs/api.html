@@ -238,11 +238,6 @@ that list into multiple lists.</p>
 <p>This method will convert the list of dicts into chunks if necessary
 and then makes one or more requests to the Nightfall API to scan the
 data.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>data</strong> (<em>list</em>) – list of dicts to scan.</p>
-</dd>
-</dl>
 <p>data dicts should be in the following format:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
     <span class="s2">&quot;id123&quot;</span><span class="p">:</span> <span class="s2">&quot;string_to_scan&quot;</span>
@@ -252,17 +247,20 @@ data.</p>
 <p>Where the key is a reference to where the string came from, and the
 value is the string that you wish to scan. The keys is not scanned
 and is not considered sensitive.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>list of list of dicts for items in payload.</p>
-</dd>
-</dl>
 <p>response dicts are in the form of:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
     <span class="s2">&quot;id123&quot;</span><span class="p">:</span> <span class="p">[{</span><span class="n">nightfall_findings</span><span class="p">},]</span> <span class="ow">or</span> <span class="kc">None</span>
 <span class="p">}</span>
 </pre></div>
 </div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>list</em>) – list of dicts to scan.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>list of list of dicts for items in payload.</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>

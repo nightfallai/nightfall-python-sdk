@@ -93,9 +93,6 @@ class Nightfall():
         and then makes one or more requests to the Nightfall API to scan the
         data.
 
-        :param data: list of dicts to scan.
-        :type data: list
-
         data dicts should be in the following format:
 
         ::
@@ -108,8 +105,6 @@ class Nightfall():
         value is the string that you wish to scan. The keys is not scanned
         and is not considered sensitive.
 
-        :returns: list of list of dicts for items in payload.
-
         response dicts are in the form of:
 
         ::
@@ -117,6 +112,10 @@ class Nightfall():
             {
                 "id123": [{nightfall_findings},] or None
             }
+            
+        :param data: list of dicts to scan.
+        :type data: list
+        :returns: list of list of dicts for items in payload.
         """
         responses = []
         chunks = self.make_payloads(data)
