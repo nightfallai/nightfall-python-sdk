@@ -177,14 +177,14 @@
 <li><p>Publish Sphinx docs to GitHub pages</p></li>
 <li><p>Split up unit and integration tests, use mocking for unit tests</p></li>
 <li><p>Update scan and chunking method to scan strings from a dict</p></li>
-<li><p>Stop attempting to split strings and instead return an error to the user</p></li>
+<li><p>Stop attempting to split strings and instead raise an exception</p></li>
 <li><p>Redefine <code class="docutils literal notranslate"><span class="pre">MAX_PAYLOAD_SIZE</span></code> constant to be actual max of 500_000 bytes</p></li>
 </ul>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>Scanning dicts instead of strings is a breaking change. Previous versions
 of the SDK accepted a list of strings for scanning. We now require users
-to pass in a list of dicts instead. <code class="docutils literal notranslate"><span class="pre">nightfall.scan(['string])</span></code> should
+to pass in a list of dicts instead. <code class="docutils literal notranslate"><span class="pre">nightfall.scan(['string'])</span></code> should
 now be <code class="docutils literal notranslate"><span class="pre">nightfall.scan([{'id':</span> <span class="pre">'string'}])</span></code>. This allows you to keep
 track of the reference of where the string came from for further processing.</p>
 </div>

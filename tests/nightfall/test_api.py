@@ -4,6 +4,7 @@ import unittest
 import requests
 
 from nightfall.api import Nightfall
+from nightfall.exceptions import InputError
 from unittest.mock import MagicMock
 
 class TestNightfallApi(unittest.TestCase):
@@ -42,7 +43,7 @@ class TestNightfallApi(unittest.TestCase):
                 f"id{i}": "x" * 500000
             })
         
-        skipped, chunks = self.client.make_payloads(large_list)
+        chunks = self.client.make_payloads(large_list)
 
         for c in chunks:
             self.assertTrue(len(c) <= self.client.MAX_NUM_ITEMS)
@@ -52,7 +53,6 @@ class TestNightfallApi(unittest.TestCase):
                     self.assertTrue(len(v) <= self.client.MAX_PAYLOAD_SIZE)
 
         self.assertEqual(len(chunks), 10)
-        self.assertEqual(len(skipped), 0)
 
     def test_chunking_many_items_list(self):
         """
@@ -65,7 +65,7 @@ class TestNightfallApi(unittest.TestCase):
                 f"id{i}": "x"
             })
 
-        skipped, chunks = self.client.make_payloads(many_list)
+        chunks = self.client.make_payloads(many_list)
 
         for c in chunks:
             self.assertTrue(len(c) <= self.client.MAX_NUM_ITEMS)
@@ -75,23 +75,15 @@ class TestNightfallApi(unittest.TestCase):
                     self.assertTrue(len(v) <= self.client.MAX_PAYLOAD_SIZE)
 
         self.assertEqual(len(chunks), 2)
-        self.assertEqual(len(skipped), 0)
 
     def test_chunking_huge_item_list(self):
-        """A a single 600kb string should be skipped"""
+        """A a single 600kb string should raise an exception"""
         large_item_list = []
         large_item_list.append({
             "id": "x" * 600000
         })
 
-        skipped, chunks = self.client.make_payloads(large_item_list)
-        self.assertEqual(len(chunks), 0)
-        self.assertEqual(len(skipped), 1)
-        self.assertEqual("id+skipped", list(skipped[0].keys())[0])
+        with self.assertRaises(InputError):
+            self.client.make_payloads(large_item_list)
 
-        for c in chunks:
-            self.assertTrue(len(c) <= self.client.MAX_NUM_ITEMS)
-            for i in c:
-                for k,v in i.items():
-                    self.assertTrue(len(v) <= self.client.MAX_PAYLOAD_SIZE)
-                    self.assertEqual(k, "id")
+        self.client.make_payloads(large_item_list)
