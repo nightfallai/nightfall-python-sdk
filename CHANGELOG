@@ -13,6 +13,7 @@ UNRELEASED
 - Update scan and chunking method to scan strings from a dict
 - Stop attempting to split strings and instead raise an exception
 - Redefine ``MAX_PAYLOAD_SIZE`` constant to be actual max of 500_000 bytes
+- Updated documentation to illustrate how to use debug logging with this library
 
 .. warning::
     Scanning dicts instead of strings is a breaking change. Previous versions
