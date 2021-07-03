@@ -85,5 +85,3 @@ class TestNightfallApi(unittest.TestCase):
 
         with self.assertRaises(InputError):
             self.client.make_payloads(large_item_list)
-
-        self.client.make_payloads(large_item_list)
