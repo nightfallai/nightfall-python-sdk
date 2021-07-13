@@ -6,7 +6,7 @@ Here you can see the full list of changes between each Nightfall release.
 Version 0.5.0
 -------------
 
-UNRELEASED
+Released on July 12, 2021
 
 - Publish Sphinx docs to GitHub pages
 - Split up unit and integration tests, use mocking for unit tests
