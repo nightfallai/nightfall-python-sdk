@@ -1,0 +1,2 @@
+{"fragment": "ySMS2a7SfGrmbEYg4PipoE7G7crmVU5I", "detectorName": "API key", "confidence": "VERY_LIKELY", "location": {"byteRange": {"start": 122, "end": 154}, "unicodeRange": {"start": 122, "end": 154}}}
+{"fragment": "th1Sisaf4k34p1k3y", "detectorName": "API key", "confidence": "LIKELY", "location": {"byteRange": {"start": 87, "end": 104}, "unicodeRange": {"start": 87, "end": 104}}}

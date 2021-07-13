@@ -9,8 +9,18 @@ Version 0.5.0
 UNRELEASED
 
 - Publish Sphinx docs to GitHub pages
-- Fix bug in chunking algorithm where a single item larger than the 
-  MAX_PAYLOAD_SIZE was not being split up properly. 
+- Split up unit and integration tests, use mocking for unit tests
+- Update scan and chunking method to scan strings from a dict
+- Stop attempting to split strings and instead raise an exception
+- Redefine ``MAX_PAYLOAD_SIZE`` constant to be actual max of 500_000 bytes
+- Updated documentation to illustrate how to use debug logging with this library
+
+.. warning::
+    Scanning dicts instead of strings is a breaking change. Previous versions
+    of the SDK accepted a list of strings for scanning. We now require users
+    to pass in a list of dicts instead. ``nightfall.scan(['string'])`` should
+    now be ``nightfall.scan([{'id': 'string'}])``. This allows you to keep
+    track of the reference of where the string came from for further processing.
 
 Version 0.4.0
 -------------

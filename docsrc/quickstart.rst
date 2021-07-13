@@ -29,6 +29,29 @@ Import Nightfall and start using methods:
         os.getenv('NIGHTFALL_CONDITION_SET')
         )
 
-    response = nightfall.scan(['test string'])
+    response = nightfall.scan([{'id': 'test string'}])
 
     print(response)    
+
+Enable Debug Logging
+--------------------
+
+Log API request and response data to the console:
+
+::
+
+    import logging
+
+    nightfall = Nightfall(token, condition_set)
+    logging.basicConfig()
+    nightfall.logger.setLevel(logging.DEBUG)
+
+Log API request and response data to a file:
+
+::
+
+    import logging
+
+    nightfall = Nightfall(token, condition_set)
+    logging.basicConfig(filename="./nightfall_log.txt)
+    nightfall.logger.setLevel(logging.DEBUG)

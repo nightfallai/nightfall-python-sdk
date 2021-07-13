@@ -96,6 +96,10 @@
 <li class="toctree-l3"><a class="reference internal" href="#nightfall-api">nightfall.api</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#module-nightfall.exceptions">Exceptions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#nightfall-exceptions">nightfall.exceptions</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -184,7 +188,7 @@
 <dl class="py data">
 <dt class="sig sig-object py" id="nightfall.api.Nightfall.MAX_PAYLOAD_SIZE">
 <span class="sig-name descname"><span class="pre">MAX_PAYLOAD_SIZE</span></span><a class="headerlink" href="#nightfall.api.Nightfall.MAX_PAYLOAD_SIZE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Maximum payload size that the Nightfall API will accept</p>
+<dd><p>Maximum payload size in bytes that the Nightfall API will accept</p>
 </dd></dl>
 
 <dl class="py data">
@@ -205,15 +209,24 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="nightfall.api.Nightfall.make_payloads">
 <span class="sig-name descname"><span class="pre">make_payloads</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#nightfall.api.Nightfall.make_payloads" title="Permalink to this definition">¶</a></dt>
-<dd><p>Turn a list of strings into a list of acceptable payloads.</p>
-<p>Creates chunks based on the MAX_PAYLOAD_SIZE and MAX_NUM_ITEMS 
+<dd><p>Turn a list of dicts <code class="docutils literal notranslate"><span class="pre">[{'id':</span> <span class="pre">'string'},]</span></code> into a list of
+acceptable payloads.</p>
+<p>Creates chunks based on the <code class="docutils literal notranslate"><span class="pre">MAX_PAYLOAD_SIZE</span></code> and <code class="docutils literal notranslate"><span class="pre">MAX_NUM_ITEMS</span></code>
 constants.</p>
+<p>When the number of items in a list is greater than <code class="docutils literal notranslate"><span class="pre">MAX_NUM_ITEMS</span></code>
+we will split the list into multiple lists. When the total sum of all
+strings in a list is greater than <code class="docutils literal notranslate"><span class="pre">MAX_PAYLOAD_SIZE</span></code>, we will split
+that list into multiple lists.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>data</strong> – list of string</p>
+<dd class="field-odd"><p><strong>data</strong> (<em>list</em>) – list of dicts</p>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>list of list of strings</p>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><a class="reference internal" href="#nightfall.exceptions.InputError" title="nightfall.exceptions.InputError"><strong>InputError</strong></a> – when individual dictionary item is larger than
+<code class="docutils literal notranslate"><span class="pre">MAX_PAYLOAD_SIZE</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>list of list of dicts to scan</p>
 </dd>
 </dl>
 </dd></dl>
@@ -222,19 +235,64 @@ constants.</p>
 <dt class="sig sig-object py" id="nightfall.api.Nightfall.scan">
 <span class="sig-name descname"><span class="pre">scan</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#nightfall.api.Nightfall.scan" title="Permalink to this definition">¶</a></dt>
 <dd><p>Scan lists of data with Nightfall.</p>
-<p>This method will convert the list of strings into chunks if necessary 
-and then makes one or more requests to the Nightfall API to scan the 
+<p>This method will convert the list of dicts into chunks if necessary
+and then makes one or more requests to the Nightfall API to scan the
 data.</p>
+<p>data dicts should be in the following format:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;id123&quot;</span><span class="p">:</span> <span class="s2">&quot;string_to_scan&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Where the key is a reference to where the string came from, and the
+value is the string that you wish to scan. The keys is not scanned
+and is not considered sensitive.</p>
+<p>response dicts are in the form of:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;id123&quot;</span><span class="p">:</span> <span class="p">[{</span><span class="n">nightfall_findings</span><span class="p">},]</span> <span class="ow">or</span> <span class="kc">None</span>
+<span class="p">}</span>
+</pre></div>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>data</strong> (<em>list</em>) – list of strings to scan.</p>
+<dd class="field-odd"><p><strong>data</strong> (<em>list</em>) – list of dicts to scan.</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>list of list of resposes for items in payload.</p>
+<dd class="field-even"><p>list of list of dicts for items in payload.</p>
 </dd>
 </dl>
 </dd></dl>
 
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="module-nightfall.exceptions">
+<span id="exceptions"></span><h2>Exceptions<a class="headerlink" href="#module-nightfall.exceptions" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="nightfall-exceptions">
+<h3>nightfall.exceptions<a class="headerlink" href="#nightfall-exceptions" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><p>This module provides some classes that subclass Exception to provide
+some useful exceptions for the API wrapper.</p>
+</div></blockquote>
+<dl class="py exception">
+<dt class="sig sig-object py" id="nightfall.exceptions.Error">
+<em class="property"><span class="pre">exception</span> </em><span class="sig-prename descclassname"><span class="pre">nightfall.exceptions.</span></span><span class="sig-name descname"><span class="pre">Error</span></span><a class="headerlink" href="#nightfall.exceptions.Error" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base class for exceptions in this module.</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="nightfall.exceptions.InputError">
+<em class="property"><span class="pre">exception</span> </em><span class="sig-prename descclassname"><span class="pre">nightfall.exceptions.</span></span><span class="sig-name descname"><span class="pre">InputError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#nightfall.exceptions.InputError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Exception raised for errors in the input.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>id</strong> – input id in which the error occurred</p></li>
+<li><p><strong>message</strong> – explanation of the error</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 </div>
