@@ -3,6 +3,14 @@ Changelog
 
 Here you can see the full list of changes between each Nightfall release.
 
+Version 0.5.1
+-------------
+
+UNRELEASED
+
+- Update scan and chunking interface to handle dict with multiple items 
+  instead of list of dicts.
+
 Version 0.5.0
 -------------
 

@@ -19,6 +19,6 @@ class TestNightfallIntegration(unittest.TestCase):
         
         This test assumes that you don't have a condition set matching the 'testing' string.
         """
-        resp = self.client.scan([{"id1": "testing"}])
+        resp = self.client.scan({"id1": "testing"})
 
-        self.assertEqual(resp[0]['id1'], None)
+        self.assertEqual(resp['id1'], None)
