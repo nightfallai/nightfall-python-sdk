@@ -6,7 +6,7 @@ Here you can see the full list of changes between each Nightfall release.
 Version 0.6.0
 -------------
 
-UNRELEASED
+Released on July 25, 2021
 
 - Update scan and chunking interface to handle dict with multiple items 
   instead of list of dicts.
