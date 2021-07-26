@@ -94,6 +94,7 @@
 </ul>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Changelog</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#version-0-6-0">Version 0.6.0</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#version-0-5-0">Version 0.5.0</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#version-0-4-0">Version 0.4.0</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#version-0-3-0">Version 0.3.0</a></li>
@@ -170,6 +171,26 @@
   <div class="section" id="changelog">
 <h1>Changelog<a class="headerlink" href="#changelog" title="Permalink to this headline">¶</a></h1>
 <p>Here you can see the full list of changes between each Nightfall release.</p>
+<div class="section" id="version-0-6-0">
+<h2>Version 0.6.0<a class="headerlink" href="#version-0-6-0" title="Permalink to this headline">¶</a></h2>
+<p>UNRELEASED</p>
+<ul class="simple">
+<li><p>Update scan and chunking interface to handle dict with multiple items
+instead of list of dicts.</p></li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This is a breaking change compared to version 0.5.0, but all users are
+reccomended to upgrade to this version. This version represents an
+improvement on the previous iteration where instead of handling a list of
+dicts, we now handle a single dict with mulitple entries. This simplifies
+the library code and makes the interface much more usable.</p>
+<p>The previous version of the SDK required users to pass in a list of dicts.
+We now require users to pass in a single dict with multiple entries.
+<code class="docutils literal notranslate"><span class="pre">nightfall.scan([{'id':</span> <span class="pre">'string}])</span></code> should now be
+<code class="docutils literal notranslate"><span class="pre">nightfall.scan({'id':</span> <span class="pre">'string'})</span></code>.</p>
+</div>
+</div>
 <div class="section" id="version-0-5-0">
 <h2>Version 0.5.0<a class="headerlink" href="#version-0-5-0" title="Permalink to this headline">¶</a></h2>
 <p>Released on July 12, 2021</p>

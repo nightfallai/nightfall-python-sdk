@@ -3,6 +3,26 @@ Changelog
 
 Here you can see the full list of changes between each Nightfall release.
 
+Version 0.6.0
+-------------
+
+UNRELEASED
+
+- Update scan and chunking interface to handle dict with multiple items 
+  instead of list of dicts.
+
+.. warning::
+    This is a breaking change compared to version 0.5.0, but all users are 
+    reccomended to upgrade to this version. This version represents an
+    improvement on the previous iteration where instead of handling a list of
+    dicts, we now handle a single dict with mulitple entries. This simplifies
+    the library code and makes the interface much more usable.
+
+    The previous version of the SDK required users to pass in a list of dicts. 
+    We now require users to pass in a single dict with multiple entries. 
+    ``nightfall.scan([{'id': 'string}])`` should now be 
+    ``nightfall.scan({'id': 'string'})``.
+
 Version 0.5.0
 -------------
 

@@ -31,57 +31,45 @@ class TestNightfallApi(unittest.TestCase):
         self.assertEqual(resp["fragment"], "th1Sisaf4k34p1k3y")
 
 
-    def test_chunking_big_item_list(self):
+    def test_chunking_big_item_dict(self):
         """
-        a list of 10 dicts that are 500KB each should turn into a 
-        list of 10 lists with one item per list
+        a dict of 10 strings that are 500KB each should turn into a 
+        list of 10 dicts with one item per dict
         """
-        large_list = []
-
-        for i in range(0,10):
-            large_list.append({
-                f"id{i}": "x" * 500000
-            })
+        large_dict = {f"id{x}": "x" * 500000 for x in range(0,10)}
         
-        chunks = self.client.make_payloads(large_list)
+        chunks = self.client.make_payloads(large_dict)
 
         for c in chunks:
             self.assertTrue(len(c) <= self.client.MAX_NUM_ITEMS)
             self.assertEqual(len(c), 1)
-            for i in c:
-                for k,v in i.items():
-                    self.assertTrue(len(v) <= self.client.MAX_PAYLOAD_SIZE)
+            for k,v in c.items():
+                self.assertTrue(len(v) <= self.client.MAX_PAYLOAD_SIZE)
 
         self.assertEqual(len(chunks), 10)
 
-    def test_chunking_many_items_list(self):
+    def test_chunking_many_items_dict(self):
         """
-        a list of 100,000 single byte items should turn into two lists with 
-        50,000 items in each list.
+        a dict of 100,000 single byte items should turn into two dicts with 
+        50,000 items in each dict.
         """
-        many_list = []
-        for i in range(0, 100000):
-            many_list.append({
-                f"id{i}": "x"
-            })
+        many_dict = {f"id{x}": "x" for x in range(0,100000)}
 
-        chunks = self.client.make_payloads(many_list)
+        chunks = self.client.make_payloads(many_dict)
 
         for c in chunks:
             self.assertTrue(len(c) <= self.client.MAX_NUM_ITEMS)
             self.assertEqual(len(c), 50000)
-            for i in c:
-                for k,v in i.items():
-                    self.assertTrue(len(v) <= self.client.MAX_PAYLOAD_SIZE)
+            for k,v in c.items():
+                self.assertTrue(len(v) <= self.client.MAX_PAYLOAD_SIZE)
 
         self.assertEqual(len(chunks), 2)
 
-    def test_chunking_huge_item_list(self):
+    def test_chunking_huge_item_dict(self):
         """A a single 600kb string should raise an exception"""
-        large_item_list = []
-        large_item_list.append({
+        large_item_dict = {
             "id": "x" * 600000
-        })
+        }
 
         with self.assertRaises(InputError):
-            self.client.make_payloads(large_item_list)
+            self.client.make_payloads(large_item_dict)
