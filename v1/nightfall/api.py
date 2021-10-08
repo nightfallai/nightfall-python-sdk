@@ -5,8 +5,11 @@ nightfall.api
     This module provides a class which abstracts the Nightfall REST API.
 """
 import json
+import os
 import requests
 import logging
+
+from requests.api import head
 
 
 class Nightfall():
@@ -18,7 +21,11 @@ class Nightfall():
     """
     MAX_PAYLOAD_SIZE = 500_000
     MAX_NUM_ITEMS = 50_000
-    SCAN_ENDPOINT = "https://api.nightfall.ai/v2/scan"
+
+    PLATFORM_URL = "https://api.nightfall.ai"
+    SCAN_V2_ENDPOINT = PLATFORM_URL + "/v2/scan"
+    SCAN_V3_ENDPOINT = PLATFORM_URL + "/v3/scan"
+    UPLOAD_ENDPOINT = PLATFORM_URL + "/v3/upload"
 
 
     def __init__(self, key):
@@ -29,12 +36,83 @@ class Nightfall():
         self._headers = {
             "Content-Type": "application/json",
             "User-Agent": "nightfall-python-sdk/1.0.0",
-            "x-api-key": self.key
+            "x-api-key": self.key, # v2
+            'Authorization': f'Bearer {self.key}', # v3
         }
         self.logger = logging.getLogger(__name__)
 
+    ### V3 ###
 
     def scanText(self, config: dict):
+        """
+        v3 endpoint
+        """
+
+        if "text" not in config.keys():
+            raise Exception("Need to supply text list with key 'text'")
+        if "detectionRules" not in config.keys() and "detectionRuleUUIDs" not in config.keys():
+            raise Exception("Need to supply detection rule ids list or detection rules dict with \
+                key 'detectionRuleUUIDs' or 'detectionRules' respectively")
+
+        if "detectionRules" in config.keys():
+            return self._handle_detectionRules_v3(config)
+        if "detectionRuleUUIDs" in config.keys():
+            return self._handle_detectionRuleUuids_v3(config)
+
+
+    def _handle_detectionRules_v3(self, config):
+        text_chunked = self._chunk(config["text"])
+        detectionRules = config["detectionRules"]
+        all_responses = []
+        for payload in text_chunked:
+            request_body = {
+                "payload": payload,
+                "config": {
+                    "detectionRules": detectionRules
+                }
+            }
+            response = self._scan_text_v3(request_body)
+            all_responses.extend(response.json()['findings'])
+        return all_responses
+
+
+    def _handle_detectionRuleUuids_v3(self, config):
+        text_chunked = self._chunk(config["text"])
+        detectionRuleUuids = config["detectionRuleUUIDs"]
+        all_responses = []
+        for payload in text_chunked:
+            request_body = {
+                "payload": payload,
+                "config": {
+                    "detectionRuleUUIDs": detectionRuleUuids
+                }
+            }
+            response = self._scan_text_v3(request_body)
+            all_responses.extend(response.json()['findings'])
+        return all_responses
+
+
+    def _scan_text_v3(self, data):
+        response = requests.post(
+            url=self.SCAN_V3_ENDPOINT,
+            headers=self._headers,
+            data=json.dumps(data)
+        )
+
+        # Logs for Debugging
+        self.logger.debug(f"HTTP Request URL: {response.request.url}")
+        self.logger.debug(f"HTTP Request Body: {response.request.body}")
+        self.logger.debug(f"HTTP Request Headers: {response.request.headers}")
+
+        self.logger.debug(f"HTTP Status Code: {response.status_code}")
+        self.logger.debug(f"HTTP Response Headers: {response.headers}")
+        self.logger.debug(f"HTTP Response Text: {response.text}")
+
+        return response
+
+    ### V2 ###
+
+    def scanText_v2(self, config: dict):
         """Scan text with Nightfall.
 
         This method takes the specified config and then makes
@@ -71,12 +149,12 @@ class Nightfall():
                 key 'detectionRuleUuids' or 'detectionRules' respectively")
 
         if "detectionRules" in config.keys():
-            return self._handle_detectionRules(config)
+            return self._handle_detectionRules_v2(config)
         if "detectionRuleUuids" in config.keys():
-            return self._handle_detectionRuleUuids(config)
+            return self._handle_detectionRuleUuids_v2(config)
 
 
-    def _handle_detectionRules(self, config):
+    def _handle_detectionRules_v2(self, config):
         text_chunked = self._chunk(config["text"])
         conditions = config["detectionRules"]
         all_responses = []
@@ -89,12 +167,12 @@ class Nightfall():
                     }
                 }
             }
-            response = self._scan_text(request_body)
+            response = self._scan_text_v2(request_body)
             all_responses.extend(response.json())
         return all_responses
 
 
-    def _handle_detectionRuleUuids(self, config):
+    def _handle_detectionRuleUuids_v2(self, config):
         text_chunked = self._chunk(config["text"])
         detectionRuleUuids = config["detectionRuleUuids"]
         all_responses = []
@@ -106,14 +184,14 @@ class Nightfall():
                         "conditionSetUUID": detectionRuleUuid
                     }
                 }
-                response = self._scan_text(request_body)
+                response = self._scan_text_v2(request_body)
                 all_responses.append(response.json())
         return all_responses
 
 
-    def _scan_text(self, data):
+    def _scan_text_v2(self, data):
         response = requests.post(
-            url=self.SCAN_ENDPOINT,
+            url=self.SCAN_V2_ENDPOINT,
             headers=self._headers,
             data=json.dumps(data)
         )
@@ -129,6 +207,7 @@ class Nightfall():
 
         return response
 
+    ### Common ###
 
     def _chunk(self, text):
         payload_size = sum([len(string_to_scan) for string_to_scan in text])
@@ -146,3 +225,4 @@ class Nightfall():
                 cur_size += len(t)
                 text_chunked[-1].append(t)
         return text_chunked
+
