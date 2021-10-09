@@ -5,11 +5,9 @@ nightfall.api
     This module provides a class which abstracts the Nightfall REST API.
 """
 import json
+import logging
 import os
 import requests
-import logging
-
-from requests.api import head
 
 
 class Nightfall():
@@ -23,9 +21,12 @@ class Nightfall():
     MAX_NUM_ITEMS = 50_000
 
     PLATFORM_URL = "https://api.nightfall.ai"
-    SCAN_V2_ENDPOINT = PLATFORM_URL + "/v2/scan"
-    SCAN_V3_ENDPOINT = PLATFORM_URL + "/v3/scan"
-    UPLOAD_ENDPOINT = PLATFORM_URL + "/v3/upload"
+    TEXT_SCAN_ENDPOINT_V2 = PLATFORM_URL + "/v2/scan"
+    TEXT_SCAN_ENDPOINT_V3 = PLATFORM_URL + "/v3/scan"
+    FILE_SCAN_INITIALIZE_ENDPOINT = PLATFORM_URL + "/v3/upload"
+    FILE_SCAN_UPLOAD_ENDPOINT = PLATFORM_URL + "/v3/upload/{0}"
+    FILE_SCAN_COMPLETE_ENDPOINT = PLATFORM_URL + "/v3/upload/{0}/finish"
+    FILE_SCAN_SCAN_ENDPOINT = PLATFORM_URL + "/v3/upload/{0}/scan"
 
 
     def __init__(self, key):
@@ -41,7 +42,9 @@ class Nightfall():
         }
         self.logger = logging.getLogger(__name__)
 
-    ### V3 ###
+
+    ### Text Scan V3 ###
+
 
     def scanText(self, config: dict):
         """
@@ -61,7 +64,7 @@ class Nightfall():
 
 
     def _handle_detectionRules_v3(self, config):
-        text_chunked = self._chunk(config["text"])
+        text_chunked = self._chunk_text(config["text"])
         detectionRules = config["detectionRules"]
         all_responses = []
         for payload in text_chunked:
@@ -77,7 +80,7 @@ class Nightfall():
 
 
     def _handle_detectionRuleUuids_v3(self, config):
-        text_chunked = self._chunk(config["text"])
+        text_chunked = self._chunk_text(config["text"])
         detectionRuleUuids = config["detectionRuleUUIDs"]
         all_responses = []
         for payload in text_chunked:
@@ -94,7 +97,7 @@ class Nightfall():
 
     def _scan_text_v3(self, data):
         response = requests.post(
-            url=self.SCAN_V3_ENDPOINT,
+            url=self.TEXT_SCAN_ENDPOINT_V3,
             headers=self._headers,
             data=json.dumps(data)
         )
@@ -110,7 +113,27 @@ class Nightfall():
 
         return response
 
-    ### V2 ###
+
+    def _chunk_text(self, text):
+        payload_size = sum([len(string_to_scan) for string_to_scan in text])
+        if payload_size <= self.MAX_PAYLOAD_SIZE:
+            return [text]
+        text_chunked = [[]]
+        cur_size = 0
+        for t in text:
+            if len(t) > self.MAX_PAYLOAD_SIZE:
+                raise Exception(f"No individual string can exceed {self.MAX_PAYLOAD_SIZE} bytes")
+            if cur_size + len(t) > self.MAX_PAYLOAD_SIZE:
+                text_chunked.append([t])
+                cur_size = len(t)
+            else:
+                cur_size += len(t)
+                text_chunked[-1].append(t)
+        return text_chunked
+
+
+    ### Text Scan V2 ###
+
 
     def scanText_v2(self, config: dict):
         """Scan text with Nightfall.
@@ -155,7 +178,7 @@ class Nightfall():
 
 
     def _handle_detectionRules_v2(self, config):
-        text_chunked = self._chunk(config["text"])
+        text_chunked = self._chunk_text(config["text"])
         conditions = config["detectionRules"]
         all_responses = []
         for payload in text_chunked:
@@ -173,7 +196,7 @@ class Nightfall():
 
 
     def _handle_detectionRuleUuids_v2(self, config):
-        text_chunked = self._chunk(config["text"])
+        text_chunked = self._chunk_text(config["text"])
         detectionRuleUuids = config["detectionRuleUuids"]
         all_responses = []
         for payload in text_chunked:
@@ -191,7 +214,7 @@ class Nightfall():
 
     def _scan_text_v2(self, data):
         response = requests.post(
-            url=self.SCAN_V2_ENDPOINT,
+            url=self.TEXT_SCAN_ENDPOINT_V2,
             headers=self._headers,
             data=json.dumps(data)
         )
@@ -207,22 +230,121 @@ class Nightfall():
 
         return response
 
-    ### Common ###
 
-    def _chunk(self, text):
-        payload_size = sum([len(string_to_scan) for string_to_scan in text])
-        if payload_size <= self.MAX_PAYLOAD_SIZE:
-            return [text]
-        text_chunked = [[]]
-        cur_size = 0
-        for t in text:
-            if len(t) > self.MAX_PAYLOAD_SIZE:
-                raise Exception(f"No individual string can exceed {self.MAX_PAYLOAD_SIZE} bytes")
-            if cur_size + len(t) > self.MAX_PAYLOAD_SIZE:
-                text_chunked.append([t])
-                cur_size = len(t)
-            else:
-                cur_size += len(t)
-                text_chunked[-1].append(t)
-        return text_chunked
+    ### File Scan ### 
 
+
+    def scanFile(self, config: dict):
+        if "location" not in config.keys():
+            raise Exception("Need to supply file location with key 'location'")
+        if "webhookUrl" not in config.keys():
+            raise Exception("Need to supply webhook url with key 'webhookUrl'")
+        if all(key not in config.keys() for key in ["detectionRules", "detectionRuleUUIDs", "policyUUID"]):
+            raise Exception("Need to supply policy id or detection rule ids list or detection rules dict with \
+                key 'policyUUID', 'detectionRuleUUIDs', 'detectionRules' respectively")
+
+        location = config["location"]
+        webhookUrl = config["webhookUrl"]
+        detectionRules = config.get("detectionRules", None)
+        detectionRuleUUIDs = config.get("detectionRuleUUIDs", None)
+        policyUUID = config.get("policyUUID", None)
+
+        response = self._file_scan_initialize(location)
+        if response.status_code != 200:
+            raise Exception(json.dumps(response.json()))
+        result = response.json()
+        id, chunkSize = result['id'], result['chunkSize']
+
+        uploaded = self._file_scan_upload(id, location, chunkSize)
+        if not uploaded:
+            raise Exception("File upload failed")
+
+        response = self._file_scan_finalize(id)
+        if response.status_code != 200:
+            raise Exception(json.dumps(response.json()))
+
+        response = self._file_scan_scan(id, webhookUrl, \
+            detectionRules=detectionRules, detectionRuleUUIDs=detectionRuleUUIDs, policyUUID=policyUUID)
+        if response.status_code != 200:
+            raise Exception(json.dumps(response.json()))
+
+        return response.json()
+
+
+    def _file_scan_initialize(self, location):
+        data = {
+            "fileSizeBytes": os.path.getsize(location)
+        }
+        response = requests.post(
+            url=self.FILE_SCAN_INITIALIZE_ENDPOINT,
+            headers=self._headers,
+            data=json.dumps(data)
+        )
+
+        return response
+
+
+    def _file_scan_upload(self, id, location, chunkSize):
+
+        def read_chunks(fp, chunk_size):
+            ix = 0
+            while True:
+                data = fp.read(chunk_size)
+                if not data:
+                    break
+                yield ix, data
+                ix = ix + 1
+
+        def upload_chunk(id, data, headers):
+            response = requests.patch(
+                url=self.FILE_SCAN_UPLOAD_ENDPOINT.format(id),
+                data = data,
+                headers=headers
+            )
+            return response
+
+        with open(location) as fp:
+            for ix, piece in read_chunks(fp, chunkSize):
+                headers = self._headers
+                headers["X-UPLOAD-OFFSET"] = str(ix * chunkSize)
+                response = upload_chunk(id, piece, headers)
+                if response.status_code != 204:
+                    raise Exception(json.dumps(response.json))
+
+        return True
+
+
+    def _file_scan_finalize(self, id):
+        response = requests.post(
+            url=self.FILE_SCAN_COMPLETE_ENDPOINT.format(id),
+            headers=self._headers
+        )
+        return response
+
+
+    def _file_scan_scan(self, id, webhookUrl, detectionRules, detectionRuleUUIDs, policyUUID):
+        if detectionRules is not None:
+            data = {
+                "policy": {
+                    "webhookURL": webhookUrl,
+                    "detectionRules": detectionRules
+                }
+            }
+        elif detectionRuleUUIDs is not None:
+            data = {
+                "policy": {
+                    "webhookURL": webhookUrl,
+                    "detectionRuleUUIDs": detectionRuleUUIDs
+                }
+            }
+        else:
+            data = {
+                "policyUUID": policyUUID
+            }
+
+        response = requests.post(
+            url=self.FILE_SCAN_SCAN_ENDPOINT.format(id),
+            headers=self._headers,
+            data=json.dumps(data)
+        )
+        return response
