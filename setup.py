@@ -1,9 +1,11 @@
 from setuptools import setup, find_packages
 
+
 def readme():
     """Return long description from file."""
     with open('README.md') as f:
         return f.read()
+
 
 setup(
     name="nightfall",

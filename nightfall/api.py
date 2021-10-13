@@ -28,7 +28,6 @@ class Nightfall():
     FILE_SCAN_COMPLETE_ENDPOINT = PLATFORM_URL + "/v3/upload/{0}/finish"
     FILE_SCAN_SCAN_ENDPOINT = PLATFORM_URL + "/v3/upload/{0}/scan"
 
-
     def __init__(self, key):
         """Instantiate a new Nightfall object.
         :param key: Your Nightfall API key.
@@ -37,14 +36,12 @@ class Nightfall():
         self._headers = {
             "Content-Type": "application/json",
             "User-Agent": "nightfall-python-sdk/1.0.0",
-            "x-api-key": self.key, # v2
-            'Authorization': f'Bearer {self.key}', # v3
+            "x-api-key": self.key,  # v2
+            'Authorization': f'Bearer {self.key}',  # v3
         }
         self.logger = logging.getLogger(__name__)
 
-
-    ### Text Scan V3 ###
-
+    # Text Scan V3
 
     def scanText(self, config: dict):
         """
@@ -62,7 +59,6 @@ class Nightfall():
         if "detectionRuleUUIDs" in config.keys():
             return self._handle_detectionRuleUuids_v3(config)
 
-
     def _handle_detectionRules_v3(self, config):
         text_chunked = self._chunk_text(config["text"])
         detectionRules = config["detectionRules"]
@@ -78,7 +74,6 @@ class Nightfall():
             all_responses.extend(response.json()['findings'])
         return all_responses
 
-
     def _handle_detectionRuleUuids_v3(self, config):
         text_chunked = self._chunk_text(config["text"])
         detectionRuleUuids = config["detectionRuleUUIDs"]
@@ -93,7 +88,6 @@ class Nightfall():
             response = self._scan_text_v3(request_body)
             all_responses.extend(response.json()['findings'])
         return all_responses
-
 
     def _scan_text_v3(self, data):
         response = requests.post(
@@ -112,7 +106,6 @@ class Nightfall():
         self.logger.debug(f"HTTP Response Text: {response.text}")
 
         return response
-
 
     def _chunk_text(self, text):
         payload_size = sum([len(string_to_scan) for string_to_scan in text])
@@ -134,9 +127,7 @@ class Nightfall():
                 cur_items += 1
         return text_chunked
 
-
-    ### Text Scan V2 ###
-
+    # Text Scan V2
 
     def scanText_v2(self, config: dict):
         """Scan text with Nightfall.
@@ -160,9 +151,9 @@ class Nightfall():
         If `detectionRuleUuids` is provided, each element in the response list
         correponds to a single detection rule being applied to each string in the text list.
 
-        If `detectionRules` is provided, each element in the response list 
+        If `detectionRules` is provided, each element in the response list
         corresponds to a single string being scanned by every detection rule.
-        
+
         :param config: dict to scan.
         :type config: dict
         :returns: array with findings.
@@ -178,7 +169,6 @@ class Nightfall():
             return self._handle_detectionRules_v2(config)
         if "detectionRuleUuids" in config.keys():
             return self._handle_detectionRuleUuids_v2(config)
-
 
     def _handle_detectionRules_v2(self, config):
         text_chunked = self._chunk_text(config["text"])
@@ -197,7 +187,6 @@ class Nightfall():
             all_responses.extend(response.json())
         return all_responses
 
-
     def _handle_detectionRuleUuids_v2(self, config):
         text_chunked = self._chunk_text(config["text"])
         detectionRuleUuids = config["detectionRuleUuids"]
@@ -213,7 +202,6 @@ class Nightfall():
                 response = self._scan_text_v2(request_body)
                 all_responses.append(response.json())
         return all_responses
-
 
     def _scan_text_v2(self, data):
         response = requests.post(
@@ -233,9 +221,7 @@ class Nightfall():
 
         return response
 
-
-    ### File Scan ### 
-
+    # File Scan
 
     def scanFile(self, config: dict):
         if "location" not in config.keys():
@@ -266,13 +252,14 @@ class Nightfall():
         if response.status_code != 200:
             raise Exception(json.dumps(response.json()))
 
-        response = self._file_scan_scan(id, webhookUrl, \
-            detectionRules=detectionRules, detectionRuleUUIDs=detectionRuleUUIDs, policyUUID=policyUUID)
+        response = self._file_scan_scan(id, webhookUrl,
+                                        detectionRules=detectionRules,
+                                        detectionRuleUUIDs=detectionRuleUUIDs,
+                                        policyUUID=policyUUID)
         if response.status_code != 200:
             raise Exception(json.dumps(response.json()))
 
         return response.json()
-
 
     def _file_scan_initialize(self, location):
         data = {
@@ -285,7 +272,6 @@ class Nightfall():
         )
 
         return response
-
 
     def _file_scan_upload(self, id, location, chunkSize):
 
@@ -301,7 +287,7 @@ class Nightfall():
         def upload_chunk(id, data, headers):
             response = requests.patch(
                 url=self.FILE_SCAN_UPLOAD_ENDPOINT.format(id),
-                data = data,
+                data=data,
                 headers=headers
             )
             return response
@@ -316,14 +302,12 @@ class Nightfall():
 
         return True
 
-
     def _file_scan_finalize(self, id):
         response = requests.post(
             url=self.FILE_SCAN_COMPLETE_ENDPOINT.format(id),
             headers=self._headers
         )
         return response
-
 
     def _file_scan_scan(self, id, webhookUrl, detectionRules, detectionRuleUUIDs, policyUUID):
         if detectionRules is not None:
