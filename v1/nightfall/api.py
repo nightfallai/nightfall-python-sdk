@@ -116,19 +116,22 @@ class Nightfall():
 
     def _chunk_text(self, text):
         payload_size = sum([len(string_to_scan) for string_to_scan in text])
-        if payload_size <= self.MAX_PAYLOAD_SIZE:
+        if payload_size <= self.MAX_PAYLOAD_SIZE and len(text) < self.MAX_NUM_ITEMS:
             return [text]
         text_chunked = [[]]
         cur_size = 0
+        cur_items = 0
         for t in text:
             if len(t) > self.MAX_PAYLOAD_SIZE:
                 raise Exception(f"No individual string can exceed {self.MAX_PAYLOAD_SIZE} bytes")
-            if cur_size + len(t) > self.MAX_PAYLOAD_SIZE:
+            if cur_size + len(t) > self.MAX_PAYLOAD_SIZE or cur_items + 1 > self.MAX_NUM_ITEMS:
                 text_chunked.append([t])
                 cur_size = len(t)
+                cur_items = 1
             else:
-                cur_size += len(t)
                 text_chunked[-1].append(t)
+                cur_size += len(t)
+                cur_items += 1
         return text_chunked
 
 
