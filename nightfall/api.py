@@ -1,153 +1,353 @@
+
 """
 nightfall.api
 ~~~~~~~~~~~~~
-
     This module provides a class which abstracts the Nightfall REST API.
 """
 import json
-import requests
 import logging
-
-from nightfall.exceptions import InputError
+import os
+import requests
 
 
 class Nightfall():
     """A python interface for the Nightfall API.
-
     .. data:: MAX_PAYLOAD_SIZE
-
         Maximum payload size in bytes that the Nightfall API will accept
-
     .. data:: MAX_NUM_ITEMS
-
         Maximum number of items that the Nightfall API will accept
     """
     MAX_PAYLOAD_SIZE = 500_000
     MAX_NUM_ITEMS = 50_000
 
-    def __init__(self, token, condition_set):
-        """Instantiate a new Nightfall object.
+    PLATFORM_URL = "https://api.nightfall.ai"
+    TEXT_SCAN_ENDPOINT_V2 = PLATFORM_URL + "/v2/scan"
+    TEXT_SCAN_ENDPOINT_V3 = PLATFORM_URL + "/v3/scan"
+    FILE_SCAN_INITIALIZE_ENDPOINT = PLATFORM_URL + "/v3/upload"
+    FILE_SCAN_UPLOAD_ENDPOINT = PLATFORM_URL + "/v3/upload/{0}"
+    FILE_SCAN_COMPLETE_ENDPOINT = PLATFORM_URL + "/v3/upload/{0}/finish"
+    FILE_SCAN_SCAN_ENDPOINT = PLATFORM_URL + "/v3/upload/{0}/scan"
 
-        :param token: Your Nightfall API token.
-        :param condition_set: Your Nightfall Condition Set UUID
+
+    def __init__(self, key):
+        """Instantiate a new Nightfall object.
+        :param key: Your Nightfall API key.
         """
-        self.token = token
-        self.condition_set = condition_set
-        self._url = 'https://api.nightfall.ai/v2/scan'
+        self.key = key
         self._headers = {
-            'Content-Type': 'application/json',
-            'x-api-key': self.token
+            "Content-Type": "application/json",
+            "User-Agent": "nightfall-python-sdk/1.0.0",
+            "x-api-key": self.key, # v2
+            'Authorization': f'Bearer {self.key}', # v3
         }
         self.logger = logging.getLogger(__name__)
 
-    def make_payloads(self, data):
-        """Turn a dict into a list of acceptable payloads.
 
-        Creates chunks based on the ``MAX_PAYLOAD_SIZE`` and ``MAX_NUM_ITEMS``
-        constants.
+    ### Text Scan V3 ###
 
-        When the number of items in a dict is greater than ``MAX_NUM_ITEMS``
-        or total sum of all strings in a dict is greater than 
-        ``MAX_PAYLOAD_SIZE``, we will split that dict into multiple dicts.
 
-        :param data: dict in form of ``{'id': 'string',}``
-        :type data: list
-
-        :raises InputError: when individual dictionary item is larger than
-            ``MAX_PAYLOAD_SIZE``
-
-        :returns: list of dicts to scan
+    def scanText(self, config: dict):
         """
-        cur_chunk_bytes = 0
-        cur_chunk = {}
-        chunks = []
-
-        for k, v in data.items():
-            if cur_chunk_bytes + len(v) >= self.MAX_PAYLOAD_SIZE or \
-                    len(cur_chunk) >= self.MAX_NUM_ITEMS:
-                if cur_chunk:
-                    chunks.append(cur_chunk)
-                    cur_chunk = {}
-                cur_chunk_bytes = len(v)
-                if len(v) <= self.MAX_PAYLOAD_SIZE:
-                    cur_chunk[k] = v
-                else:
-                    err_msg = f"Unable to scan string with id: '{k}'; " \
-                                f"larger than {self.MAX_PAYLOAD_SIZE} bytes."
-                    raise InputError(k, err_msg)
-            else:
-                cur_chunk[k] = v
-                cur_chunk_bytes += len(v)
-        if cur_chunk:
-            chunks.append(cur_chunk)
-
-        return chunks
-
-    def scan(self, data):
-        """Scan data with Nightfall.
-
-        This method will convert a dict into chunks if necessary
-        and then makes one or more requests to the Nightfall API to scan the
-        data.
-
-        data dicts should be in the following format:
-
-        ::
-
-            {
-                "id123": "string_to_scan",
-            }
-
-        Where the key is a reference to where the string came from, and the
-        value is the string that you wish to scan. The keys is not scanned
-        and is not considered sensitive.
-
-        response dicts are in the form of:
-
-        ::
-
-            {
-                "id123": [{nightfall_findings},] or None,
-            }
-            
-        :param data: dict to scan.
-        :type data: dict
-        :returns: dict with findings.
+        v3 endpoint
         """
-        all_findings = {}
-        chunks = self.make_payloads(data)
 
-        for chunk in chunks:
-            data = {
-                'payload': list(chunk.values()),
-                'config': {
-                    'conditionSetUUID': self.condition_set
+        if "text" not in config.keys():
+            raise Exception("Need to supply text list with key 'text'")
+        if "detectionRules" not in config.keys() and "detectionRuleUUIDs" not in config.keys():
+            raise Exception("Need to supply detection rule ids list or detection rules dict with \
+                key 'detectionRuleUUIDs' or 'detectionRules' respectively")
+
+        if "detectionRules" in config.keys():
+            return self._handle_detectionRules_v3(config)
+        if "detectionRuleUUIDs" in config.keys():
+            return self._handle_detectionRuleUuids_v3(config)
+
+
+    def _handle_detectionRules_v3(self, config):
+        text_chunked = self._chunk_text(config["text"])
+        detectionRules = config["detectionRules"]
+        all_responses = []
+        for payload in text_chunked:
+            request_body = {
+                "payload": payload,
+                "config": {
+                    "detectionRules": detectionRules
                 }
             }
+            response = self._scan_text_v3(request_body)
+            all_responses.extend(response.json()['findings'])
+        return all_responses
 
-            response = requests.post(
-                url=self._url,
-                headers=self._headers,
-                data=json.dumps(data)
+
+    def _handle_detectionRuleUuids_v3(self, config):
+        text_chunked = self._chunk_text(config["text"])
+        detectionRuleUuids = config["detectionRuleUUIDs"]
+        all_responses = []
+        for payload in text_chunked:
+            request_body = {
+                "payload": payload,
+                "config": {
+                    "detectionRuleUUIDs": detectionRuleUuids
+                }
+            }
+            response = self._scan_text_v3(request_body)
+            all_responses.extend(response.json()['findings'])
+        return all_responses
+
+
+    def _scan_text_v3(self, data):
+        response = requests.post(
+            url=self.TEXT_SCAN_ENDPOINT_V3,
+            headers=self._headers,
+            data=json.dumps(data)
+        )
+
+        # Logs for Debugging
+        self.logger.debug(f"HTTP Request URL: {response.request.url}")
+        self.logger.debug(f"HTTP Request Body: {response.request.body}")
+        self.logger.debug(f"HTTP Request Headers: {response.request.headers}")
+
+        self.logger.debug(f"HTTP Status Code: {response.status_code}")
+        self.logger.debug(f"HTTP Response Headers: {response.headers}")
+        self.logger.debug(f"HTTP Response Text: {response.text}")
+
+        return response
+
+
+    def _chunk_text(self, text):
+        payload_size = sum([len(string_to_scan) for string_to_scan in text])
+        if payload_size <= self.MAX_PAYLOAD_SIZE and len(text) < self.MAX_NUM_ITEMS:
+            return [text]
+        text_chunked = [[]]
+        cur_size = 0
+        cur_items = 0
+        for t in text:
+            if len(t) > self.MAX_PAYLOAD_SIZE:
+                raise Exception(f"No individual string can exceed {self.MAX_PAYLOAD_SIZE} bytes")
+            if cur_size + len(t) > self.MAX_PAYLOAD_SIZE or cur_items + 1 > self.MAX_NUM_ITEMS:
+                text_chunked.append([t])
+                cur_size = len(t)
+                cur_items = 1
+            else:
+                text_chunked[-1].append(t)
+                cur_size += len(t)
+                cur_items += 1
+        return text_chunked
+
+
+    ### Text Scan V2 ###
+
+
+    def scanText_v2(self, config: dict):
+        """Scan text with Nightfall.
+
+        This method takes the specified config and then makes
+        one or more requests to the Nightfall API for scanning.
+
+        config dict should be in the following format:
+        ::
+            {
+                "text": ["string_to_scan",],
+                "detectionRuleUuids": ["uuid",],
+            }
+        or
+        ::
+            {
+                "text": ["string_to_scan",],
+                "detectionRules": [{detection_rule},],
+            }
+
+        If `detectionRuleUuids` is provided, each element in the response list
+        correponds to a single detection rule being applied to each string in the text list.
+
+        If `detectionRules` is provided, each element in the response list 
+        corresponds to a single string being scanned by every detection rule.
+        
+        :param config: dict to scan.
+        :type config: dict
+        :returns: array with findings.
+        """
+
+        if "text" not in config.keys():
+            raise Exception("Need to supply text list with key 'text'")
+        if "detectionRules" not in config.keys() and "detectionRuleUuids" not in config.keys():
+            raise Exception("Need to supply detection rule ids list or detection rules dict with \
+                key 'detectionRuleUuids' or 'detectionRules' respectively")
+
+        if "detectionRules" in config.keys():
+            return self._handle_detectionRules_v2(config)
+        if "detectionRuleUuids" in config.keys():
+            return self._handle_detectionRuleUuids_v2(config)
+
+
+    def _handle_detectionRules_v2(self, config):
+        text_chunked = self._chunk_text(config["text"])
+        conditions = config["detectionRules"]
+        all_responses = []
+        for payload in text_chunked:
+            request_body = {
+                "payload": payload,
+                "config": {
+                    "conditionSet": {
+                        "conditions": conditions
+                    }
+                }
+            }
+            response = self._scan_text_v2(request_body)
+            all_responses.extend(response.json())
+        return all_responses
+
+
+    def _handle_detectionRuleUuids_v2(self, config):
+        text_chunked = self._chunk_text(config["text"])
+        detectionRuleUuids = config["detectionRuleUuids"]
+        all_responses = []
+        for payload in text_chunked:
+            for detectionRuleUuid in detectionRuleUuids:
+                request_body = {
+                    "payload": payload,
+                    "config": {
+                        "conditionSetUUID": detectionRuleUuid
+                    }
+                }
+                response = self._scan_text_v2(request_body)
+                all_responses.append(response.json())
+        return all_responses
+
+
+    def _scan_text_v2(self, data):
+        response = requests.post(
+            url=self.TEXT_SCAN_ENDPOINT_V2,
+            headers=self._headers,
+            data=json.dumps(data)
+        )
+
+        # Logs for Debugging
+        self.logger.debug(f"HTTP Request URL: {response.request.url}")
+        self.logger.debug(f"HTTP Request Body: {response.request.body}")
+        self.logger.debug(f"HTTP Request Headers: {response.request.headers}")
+
+        self.logger.debug(f"HTTP Status Code: {response.status_code}")
+        self.logger.debug(f"HTTP Response Headers: {response.headers}")
+        self.logger.debug(f"HTTP Response Text: {response.text}")
+
+        return response
+
+
+    ### File Scan ### 
+
+
+    def scanFile(self, config: dict):
+        if "location" not in config.keys():
+            raise Exception("Need to supply file location with key 'location'")
+        if "webhookUrl" not in config.keys():
+            raise Exception("Need to supply webhook url with key 'webhookUrl'")
+        if all(key not in config.keys() for key in ["detectionRules", "detectionRuleUUIDs", "policyUUID"]):
+            raise Exception("Need to supply policy id or detection rule ids list or detection rules dict with \
+                key 'policyUUID', 'detectionRuleUUIDs', 'detectionRules' respectively")
+
+        location = config["location"]
+        webhookUrl = config["webhookUrl"]
+        detectionRules = config.get("detectionRules", None)
+        detectionRuleUUIDs = config.get("detectionRuleUUIDs", None)
+        policyUUID = config.get("policyUUID", None)
+
+        response = self._file_scan_initialize(location)
+        if response.status_code != 200:
+            raise Exception(json.dumps(response.json()))
+        result = response.json()
+        id, chunkSize = result['id'], result['chunkSize']
+
+        uploaded = self._file_scan_upload(id, location, chunkSize)
+        if not uploaded:
+            raise Exception("File upload failed")
+
+        response = self._file_scan_finalize(id)
+        if response.status_code != 200:
+            raise Exception(json.dumps(response.json()))
+
+        response = self._file_scan_scan(id, webhookUrl, \
+            detectionRules=detectionRules, detectionRuleUUIDs=detectionRuleUUIDs, policyUUID=policyUUID)
+        if response.status_code != 200:
+            raise Exception(json.dumps(response.json()))
+
+        return response.json()
+
+
+    def _file_scan_initialize(self, location):
+        data = {
+            "fileSizeBytes": os.path.getsize(location)
+        }
+        response = requests.post(
+            url=self.FILE_SCAN_INITIALIZE_ENDPOINT,
+            headers=self._headers,
+            data=json.dumps(data)
+        )
+
+        return response
+
+
+    def _file_scan_upload(self, id, location, chunkSize):
+
+        def read_chunks(fp, chunk_size):
+            ix = 0
+            while True:
+                data = fp.read(chunk_size)
+                if not data:
+                    break
+                yield ix, data
+                ix = ix + 1
+
+        def upload_chunk(id, data, headers):
+            response = requests.patch(
+                url=self.FILE_SCAN_UPLOAD_ENDPOINT.format(id),
+                data = data,
+                headers=headers
             )
+            return response
 
-            # Logs for Debugging
-            self.logger.debug(f"HTTP Request URL: {response.request.url}")
-            self.logger.debug(f"HTTP Request Body: {response.request.body}")
-            self.logger.debug(
-                f"HTTP Request Headers: {response.request.headers}")
+        with open(location) as fp:
+            for ix, piece in read_chunks(fp, chunkSize):
+                headers = self._headers
+                headers["X-UPLOAD-OFFSET"] = str(ix * chunkSize)
+                response = upload_chunk(id, piece, headers)
+                if response.status_code != 204:
+                    raise Exception(json.dumps(response.json))
 
-            self.logger.debug(f"HTTP Status Code: {response.status_code}")
-            self.logger.debug(f"HTTP Response Headers: {response.headers}")
-            self.logger.debug(f"HTTP Response Text: {response.text}")
+        return True
 
-            response.raise_for_status()
-            findings = response.json()
 
-            for idx, d in enumerate(chunk):
-                if findings[idx] is not None:
-                    all_findings[d] = findings[idx]
-                else:
-                    all_findings[d] = None
+    def _file_scan_finalize(self, id):
+        response = requests.post(
+            url=self.FILE_SCAN_COMPLETE_ENDPOINT.format(id),
+            headers=self._headers
+        )
+        return response
 
-        return all_findings
+
+    def _file_scan_scan(self, id, webhookUrl, detectionRules, detectionRuleUUIDs, policyUUID):
+        if detectionRules is not None:
+            data = {
+                "policy": {
+                    "webhookURL": webhookUrl,
+                    "detectionRules": detectionRules
+                }
+            }
+        elif detectionRuleUUIDs is not None:
+            data = {
+                "policy": {
+                    "webhookURL": webhookUrl,
+                    "detectionRuleUUIDs": detectionRuleUUIDs
+                }
+            }
+        else:
+            data = {
+                "policyUUID": policyUUID
+            }
+
+        response = requests.post(
+            url=self.FILE_SCAN_SCAN_ENDPOINT.format(id),
+            headers=self._headers,
+            data=json.dumps(data)
+        )
+        return response
