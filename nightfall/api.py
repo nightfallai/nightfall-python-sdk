@@ -4,6 +4,9 @@ nightfall.api
 ~~~~~~~~~~~~~
     This module provides a class which abstracts the Nightfall REST API.
 """
+from datetime import datetime, timedelta
+import hmac
+import hashlib
 import json
 import logging
 import os
@@ -28,7 +31,7 @@ class Nightfall():
     FILE_SCAN_COMPLETE_ENDPOINT = PLATFORM_URL + "/v3/upload/{0}/finish"
     FILE_SCAN_SCAN_ENDPOINT = PLATFORM_URL + "/v3/upload/{0}/scan"
 
-    def __init__(self, key):
+    def __init__(self, key: str):
         """Instantiate a new Nightfall object.
         :param key: Your Nightfall API key.
         """
@@ -335,3 +338,31 @@ class Nightfall():
             data=json.dumps(data)
         )
         return response
+
+    def validateWebhook(self, request_signature: str, request_timestamp: str, request_data: str):
+        """
+        Validate the integrity of webhook requests coming from Nightfall.
+
+        :param request_signature: value of X-Nightfall-Signature header
+        :type request_signature: str
+        :param request_timestamp: value of X-Nightfall-Timestamp header
+        :type request_timestamp: str
+        :param request_data: request body as a unicode string
+            Flask: request.get_data(as_text=True)
+            Django: request.body.decode("utf-8")
+        :type request_data: str
+        :returns: validation status boolean
+        """
+
+        SIGNING_SECRET = self.key
+        now = datetime.now()
+        if now-timedelta(minutes=5) <= datetime.fromtimestamp(int(request_timestamp)) <= now:
+            raise Exception("could not validate timestamp is within the last few minutes")
+        computed_signature = hmac.new(
+            SIGNING_SECRET.encode(),
+            msg=F"{request_timestamp}:{request_data}".encode(),
+            digestmod=hashlib.sha256
+        ).hexdigest().lower()
+        if computed_signature != request_signature:
+            raise Exception("could not validate signature of inbound request!")
+        return True
