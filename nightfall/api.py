@@ -31,9 +31,10 @@ class Nightfall():
     FILE_SCAN_COMPLETE_ENDPOINT = PLATFORM_URL + "/v3/upload/{0}/finish"
     FILE_SCAN_SCAN_ENDPOINT = PLATFORM_URL + "/v3/upload/{0}/scan"
 
-    def __init__(self, key: str):
+    def __init__(self, key: str, signing_secret: str = None):
         """Instantiate a new Nightfall object.
         :param key: Your Nightfall API key.
+        :param signing_secret: Your Nightfall signing secret used for webhook validation.
         """
         self.key = key
         self._headers = {
@@ -42,6 +43,7 @@ class Nightfall():
             "x-api-key": self.key,  # v2
             'Authorization': f'Bearer {self.key}',  # v3
         }
+        self.signing_secret = signing_secret
         self.logger = logging.getLogger(__name__)
 
     # Text Scan V3
@@ -354,12 +356,11 @@ class Nightfall():
         :returns: validation status boolean
         """
 
-        SIGNING_SECRET = self.key
         now = datetime.now()
         if now-timedelta(minutes=5) <= datetime.fromtimestamp(int(request_timestamp)) <= now:
             raise Exception("could not validate timestamp is within the last few minutes")
         computed_signature = hmac.new(
-            SIGNING_SECRET.encode(),
+            self.signing_secret.encode(),
             msg=F"{request_timestamp}:{request_data}".encode(),
             digestmod=hashlib.sha256
         ).hexdigest().lower()
