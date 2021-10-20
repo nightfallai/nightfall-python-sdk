@@ -5,7 +5,7 @@ from nightfall.api import Nightfall
 
 
 def test_scanText_detectionRules_v2():
-    nightfall = Nightfall(os.getenv('NIGHTFALL_API_KEY'))
+    nightfall = Nightfall(os.environ['NIGHTFALL_API_KEY'])
 
     result = nightfall.scanText_v2({
         "text": ["4916-6734-7572-5015 is my credit card number"],
@@ -26,7 +26,7 @@ def test_scanText_detectionRules_v2():
 
 
 def test_scanText_detectionRules_v3():
-    nightfall = Nightfall(os.getenv('NIGHTFALL_API_KEY'))
+    nightfall = Nightfall(os.environ['NIGHTFALL_API_KEY'])
 
     result = nightfall.scanText({
         "text": ["4916-6734-7572-5015 is my credit card number"],
@@ -57,7 +57,7 @@ def test_chunking_big_item_list():
     a list of 10 strings that are 500KB each should turn into a
     list of 10 lists with one item per list
     """
-    nightfall = Nightfall(os.getenv('NIGHTFALL_API_KEY'))
+    nightfall = Nightfall(os.environ['NIGHTFALL_API_KEY'])
 
     large_list = ["x" * 500000 for _ in range(10)]
 
@@ -76,7 +76,7 @@ def test_chunking_many_items_list():
     A list of 100,000 single byte items should turn into two lists each
     with 50,000 items.
     """
-    nightfall = Nightfall(os.getenv('NIGHTFALL_API_KEY'))
+    nightfall = Nightfall(os.environ['NIGHTFALL_API_KEY'])
 
     many_list = ["x" for _ in range(100000)]
 
@@ -94,7 +94,7 @@ def test_chunking_many_items_list():
 
 def test_chunking_huge_item_list():
     """A single 600kb string should raise an exception"""
-    nightfall = Nightfall(os.getenv('NIGHTFALL_API_KEY'))
+    nightfall = Nightfall(os.environ['NIGHTFALL_API_KEY'])
 
     large_item_list = ["x" * 600000]
 
@@ -103,7 +103,7 @@ def test_chunking_huge_item_list():
 
 
 def test_scanFile_detectionRules():
-    nightfall = Nightfall(os.getenv('NIGHTFALL_API_KEY'))
+    nightfall = Nightfall(os.environ['NIGHTFALL_API_KEY'])
 
     file = "file.txt"
 
@@ -112,7 +112,7 @@ def test_scanFile_detectionRules():
 
     result = nightfall.scanFile({
         "location": file,
-        "webhookUrl": os.getenv('WEBHOOK_ENDPOINT'),
+        "webhookUrl": os.environ['WEBHOOK_ENDPOINT'],
         "detectionRules": [
             {
                 "name": "string",
