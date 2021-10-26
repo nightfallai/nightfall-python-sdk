@@ -48,63 +48,57 @@ class Nightfall():
 
     # Text Scan V3
 
-    def scanText(self, text, config: dict):
+    def scan_text(self, text: str, detection_rule_uuids: list = None, detection_rules: list = None):
         """Scan text with Nightfall.
 
         This method takes the specified config and then makes
         one or more requests to the Nightfall API for scanning.
 
-        config dict should be in the following format:
+        Either detection_rule_uuids or detection_rules is required.
         ::
-            {
-                "detectionRuleUuids": ["uuid",],
-            }
-        or
-        ::
-            {
-                "detectionRules": [{detection_rule},],
-            }
+            detection_rule_uuids: ["uuid",]
+            detection_rules: [{detection_rule},]
 
         :param text: text to scan.
         :type text: str
-        :param config: dict to scan.
-        :type config: dict
+        :param detection_rule_uuids: list of detection rule UUIDs.
+        :type detection_rule_uuids: list
+        :param detection_rules: list of detection rules.
+        :type detection_rules: list
         :returns: array with findings.
         """
 
-        if "detectionRules" not in config.keys() and "detectionRuleUUIDs" not in config.keys():
+        if not detection_rule_uuids and not detection_rules:
             raise Exception("Need to supply detection rule ids list or detection rules dict with \
-                key 'detectionRuleUUIDs' or 'detectionRules' respectively")
+                key 'detection_rule_uuids' or 'detection_rules' respectively")
 
-        if "detectionRules" in config.keys():
-            return self._handle_detectionRules_v3(text, config)
-        if "detectionRuleUUIDs" in config.keys():
-            return self._handle_detectionRuleUuids_v3(text, config)
+        if detection_rule_uuids:
+            return self._handle_detection_rule_uuids_v3(text, detection_rule_uuids)
+        if detection_rules:
+            return self._handle_detection_rules_v3(text, detection_rules)
 
-    def _handle_detectionRules_v3(self, text, config):
+    def _handle_detection_rule_uuids_v3(self, text, detection_rule_uuids):
         text_chunked = self._chunk_text(text)
-        detectionRules = config["detectionRules"]
         all_responses = []
         for payload in text_chunked:
             request_body = {
                 "payload": payload,
                 "config": {
-                    "detectionRules": detectionRules
+                    "detectionRuleUUIDs": detection_rule_uuids
                 }
             }
             response = self._scan_text_v3(request_body)
             all_responses.extend(response.json()['findings'])
         return all_responses
 
-    def _handle_detectionRuleUuids_v3(self, text, config):
+    def _handle_detection_rules_v3(self, text, detection_rules):
         text_chunked = self._chunk_text(text)
-        detectionRuleUuids = config["detectionRuleUUIDs"]
         all_responses = []
         for payload in text_chunked:
             request_body = {
                 "payload": payload,
                 "config": {
-                    "detectionRuleUUIDs": detectionRuleUuids
+                    "detectionRules": detection_rules
                 }
             }
             response = self._scan_text_v3(request_body)
@@ -151,76 +145,70 @@ class Nightfall():
 
     # Text Scan V2
 
-    def scanText_v2(self, text, config: dict):
+    def scan_text_v2(self, text: str, detection_rule_uuids: list = None, detection_rules: list = None):
         """Scan text with Nightfall via the v2 endpoint.
 
         This method takes the specified config and then makes
         one or more requests to the Nightfall API for scanning.
 
-        config dict should be in the following format:
+        Either detection_rule_uuids or detection_rules is required.
         ::
-            {
-                "detectionRuleUuids": ["uuid",],
-            }
-        or
-        ::
-            {
-                "detectionRules": [{detection_rule},],
-            }
+            detection_rule_uuids: ["uuid",]
+            detection_rules: [{detection_rule},]
 
-        If `detectionRuleUuids` is provided, each element in the response list
+        If `detection_rule_uuids` is provided, each element in the response list
         correponds to a single detection rule being applied to each string in the text list.
 
-        If `detectionRules` is provided, each element in the response list
+        If `detection_rules` is provided, each element in the response list
         corresponds to a single string being scanned by every detection rule.
 
         :param text: text to scan.
         :type text: str
-        :param config: dict to scan.
-        :type config: dict
+        :param detection_rule_uuids: list of detection rule UUIDs.
+        :type detection_rule_uuids: list
+        :param detection_rules: list of detection rules.
+        :type detection_rules: list
         :returns: array with findings.
         """
 
-        if "detectionRules" not in config.keys() and "detectionRuleUuids" not in config.keys():
+        if not detection_rule_uuids and not detection_rules:
             raise Exception("Need to supply detection rule ids list or detection rules dict with \
-                key 'detectionRuleUuids' or 'detectionRules' respectively")
+                key 'detection_rule_uuids' or 'detection_rules' respectively")
 
-        if "detectionRules" in config.keys():
-            return self._handle_detectionRules_v2(text, config)
-        if "detectionRuleUuids" in config.keys():
-            return self._handle_detectionRuleUuids_v2(text, config)
+        if detection_rule_uuids:
+            return self._handle_detection_rule_uuids_v2(text, detection_rule_uuids)
+        if detection_rules:
+            return self._handle_detection_rules_v2(text, detection_rules)
 
-    def _handle_detectionRules_v2(self, text, config):
+    def _handle_detection_rule_uuids_v2(self, text, detection_rule_uuids):
         text_chunked = self._chunk_text(text)
-        conditions = config["detectionRules"]
+        all_responses = []
+        for payload in text_chunked:
+            for detection_rule_uuid in detection_rule_uuids:
+                request_body = {
+                    "payload": payload,
+                    "config": {
+                        "conditionSetUUID": detection_rule_uuid
+                    }
+                }
+                response = self._scan_text_v2(request_body)
+                all_responses.append(response.json())
+        return all_responses
+
+    def _handle_detection_rules_v2(self, text, detection_rules):
+        text_chunked = self._chunk_text(text)
         all_responses = []
         for payload in text_chunked:
             request_body = {
                 "payload": payload,
                 "config": {
                     "conditionSet": {
-                        "conditions": conditions
+                        "conditions": detection_rules
                     }
                 }
             }
             response = self._scan_text_v2(request_body)
             all_responses.extend(response.json())
-        return all_responses
-
-    def _handle_detectionRuleUuids_v2(self, text, config):
-        text_chunked = self._chunk_text(text)
-        detectionRuleUuids = config["detectionRuleUuids"]
-        all_responses = []
-        for payload in text_chunked:
-            for detectionRuleUuid in detectionRuleUuids:
-                request_body = {
-                    "payload": payload,
-                    "config": {
-                        "conditionSetUUID": detectionRuleUuid
-                    }
-                }
-                response = self._scan_text_v2(request_body)
-                all_responses.append(response.json())
         return all_responses
 
     def _scan_text_v2(self, data):
@@ -243,28 +231,39 @@ class Nightfall():
 
     # File Scan
 
-    def scanFile(self, config: dict):
-        if "location" not in config.keys():
-            raise Exception("Need to supply file location with key 'location'")
-        if "webhookUrl" not in config.keys():
-            raise Exception("Need to supply webhook url with key 'webhookUrl'")
-        if all(key not in config.keys() for key in ["detectionRules", "detectionRuleUUIDs", "policyUUID"]):
-            raise Exception("Need to supply policy id or detection rule ids list or detection rules dict with \
-                key 'policyUUID', 'detectionRuleUUIDs', 'detectionRules' respectively")
+    def scan_file(self, location: str, webhook_url: str, policy_uuid: str = None,
+                  detection_rule_uuids: list = None, detection_rules: list = None):
+        """Scan file with Nightfall.
 
-        location = config["location"]
-        webhookUrl = config["webhookUrl"]
-        detectionRules = config.get("detectionRules", None)
-        detectionRuleUUIDs = config.get("detectionRuleUUIDs", None)
-        policyUUID = config.get("policyUUID", None)
+        Either policy_uuid or detection_rule_uuids or detection_rules is required.
+        ::
+            policy_uuid: "uuid"
+            detection_rule_uuids: ["uuid",]
+            detection_rules: [{detection_rule},]
+
+        :param location: location of file to scan.
+        :type text: str
+        :param webhook_url: webhook endpoint which will receive the results of the scan.
+        :type text: str
+        :param policy_uuid: policy UUID.
+        :type policy_uuid: str
+        :param detection_rule_uuids: list of detection rule UUIDs.
+        :type detection_rule_uuids: list
+        :param detection_rules: list of detection rules.
+        :type detection_rules: list
+        """
+
+        if not policy_uuid and not detection_rule_uuids and not detection_rules:
+            raise Exception("Need to supply policy id or detection rule ids list or detection rules dict with \
+                key 'policy_uuid', 'detection_rule_uuids', 'detection_rules' respectively")
 
         response = self._file_scan_initialize(location)
         if response.status_code != 200:
             raise Exception(json.dumps(response.json()))
         result = response.json()
-        id, chunkSize = result['id'], result['chunkSize']
+        id, chunk_size = result['id'], result['chunkSize']
 
-        uploaded = self._file_scan_upload(id, location, chunkSize)
+        uploaded = self._file_scan_upload(id, location, chunk_size)
         if not uploaded:
             raise Exception("File upload failed")
 
@@ -272,16 +271,16 @@ class Nightfall():
         if response.status_code != 200:
             raise Exception(json.dumps(response.json()))
 
-        response = self._file_scan_scan(id, webhookUrl,
-                                        detectionRules=detectionRules,
-                                        detectionRuleUUIDs=detectionRuleUUIDs,
-                                        policyUUID=policyUUID)
+        response = self._file_scan_scan(id, webhook_url,
+                                        policy_uuid=policy_uuid,
+                                        detection_rule_uuids=detection_rule_uuids,
+                                        detection_rules=detection_rules)
         if response.status_code != 200:
             raise Exception(json.dumps(response.json()))
 
         return response.json()
 
-    def _file_scan_initialize(self, location):
+    def _file_scan_initialize(self, location: str):
         data = {
             "fileSizeBytes": os.path.getsize(location)
         }
@@ -293,7 +292,7 @@ class Nightfall():
 
         return response
 
-    def _file_scan_upload(self, id, location, chunkSize):
+    def _file_scan_upload(self, id, location: str, chunk_size: int):
 
         def read_chunks(fp, chunk_size):
             ix = 0
@@ -313,9 +312,9 @@ class Nightfall():
             return response
 
         with open(location) as fp:
-            for ix, piece in read_chunks(fp, chunkSize):
+            for ix, piece in read_chunks(fp, chunk_size):
                 headers = self._headers
-                headers["X-UPLOAD-OFFSET"] = str(ix * chunkSize)
+                headers["X-UPLOAD-OFFSET"] = str(ix * chunk_size)
                 response = upload_chunk(id, piece, headers)
                 if response.status_code != 204:
                     raise Exception(json.dumps(response.json))
@@ -329,24 +328,24 @@ class Nightfall():
         )
         return response
 
-    def _file_scan_scan(self, id, webhookUrl, detectionRules, detectionRuleUUIDs, policyUUID):
-        if detectionRules is not None:
+    def _file_scan_scan(self, id, webhook_url, policy_uuid: str, detection_rule_uuids: str, detection_rules: str):
+        if policy_uuid:
             data = {
-                "policy": {
-                    "webhookURL": webhookUrl,
-                    "detectionRules": detectionRules
-                }
+                "policyUUID": policy_uuid
             }
-        elif detectionRuleUUIDs is not None:
+        elif detection_rule_uuids:
             data = {
                 "policy": {
-                    "webhookURL": webhookUrl,
-                    "detectionRuleUUIDs": detectionRuleUUIDs
+                    "webhookURL": webhook_url,
+                    "detectionRuleUUIDs": detection_rule_uuids
                 }
             }
         else:
             data = {
-                "policyUUID": policyUUID
+                "policy": {
+                    "webhookURL": webhook_url,
+                    "detectionRules": detection_rules
+                }
             }
 
         response = requests.post(
@@ -356,7 +355,7 @@ class Nightfall():
         )
         return response
 
-    def validateWebhook(self, request_signature: str, request_timestamp: str, request_data: str):
+    def validate_webhook(self, request_signature: str, request_timestamp: str, request_data: str):
         """
         Validate the integrity of webhook requests coming from Nightfall.
 

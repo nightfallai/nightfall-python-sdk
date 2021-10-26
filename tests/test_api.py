@@ -4,53 +4,49 @@ import pytest
 from nightfall.api import Nightfall
 
 
-def test_scanText_detectionRules_v2():
+def test_scan_text_detection_rules_v2():
     nightfall = Nightfall(os.environ['NIGHTFALL_API_KEY'])
 
-    result = nightfall.scanText_v2(
+    result = nightfall.scan_text_v2(
         ["4916-6734-7572-5015 is my credit card number"],
-        {
-            "detectionRules": [
-                {
-                    "minNumFindings": 1,
-                    "minConfidence": "LIKELY",
-                    "detector": {
-                        "displayName": "Credit Card Number",
-                        "detectorType": "NIGHTFALL_DETECTOR",
-                        "nightfallDetector": "CREDIT_CARD_NUMBER"
-                    }
+        detection_rules=[
+            {
+                "minNumFindings": 1,
+                "minConfidence": "LIKELY",
+                "detector": {
+                    "displayName": "Credit Card Number",
+                    "detectorType": "NIGHTFALL_DETECTOR",
+                    "nightfallDetector": "CREDIT_CARD_NUMBER"
                 }
-            ]
-        }
+            }
+        ]
     )
 
     assert len(result) == 1
 
 
-def test_scanText_detectionRules_v3():
+def test_scan_text_detection_rules_v3():
     nightfall = Nightfall(os.environ['NIGHTFALL_API_KEY'])
 
-    result = nightfall.scanText(
+    result = nightfall.scan_text(
         ["4916-6734-7572-5015 is my credit card number"],
-        {
-            "detectionRules": [
-                {
-                    "name": "string",
-                    "logicalOp": "ANY",
-                    "minNumFindings": 1,
-                    "minConfidence": "POSSIBLE",
-                    "detectors": [
-                        {
-                            "minNumFindings": 1,
-                            "minConfidence": "POSSIBLE",
-                            "displayName": "Credit Card Number",
-                            "detectorType": "NIGHTFALL_DETECTOR",
-                            "nightfallDetector": "CREDIT_CARD_NUMBER"
-                        }
-                    ]
-                }
-            ]
-        }
+        detection_rules=[
+            {
+                "name": "string",
+                "logicalOp": "ANY",
+                "minNumFindings": 1,
+                "minConfidence": "POSSIBLE",
+                "detectors": [
+                    {
+                        "minNumFindings": 1,
+                        "minConfidence": "POSSIBLE",
+                        "displayName": "Credit Card Number",
+                        "detectorType": "NIGHTFALL_DETECTOR",
+                        "nightfallDetector": "CREDIT_CARD_NUMBER"
+                    }
+                ]
+            }
+        ]
     )
 
     assert len(result) == 1
@@ -106,7 +102,7 @@ def test_chunking_huge_item_list():
         nightfall._chunk_text(large_item_list)
 
 
-def test_scanFile_detectionRules():
+def test_scan_file_detection_rules():
     nightfall = Nightfall(os.environ['NIGHTFALL_API_KEY'])
 
     file = "file.txt"
@@ -114,10 +110,10 @@ def test_scanFile_detectionRules():
     with open(file, "w") as fp:
         fp.write("4916-6734-7572-5015 is my credit card number")
 
-    result = nightfall.scanFile({
-        "location": file,
-        "webhookUrl": os.environ['WEBHOOK_ENDPOINT'],
-        "detectionRules": [
+    result = nightfall.scan_file(
+        file,
+        os.environ['WEBHOOK_ENDPOINT'],
+        detection_rules=[
             {
                 "name": "string",
                 "logicalOp": "ANY",
@@ -134,7 +130,7 @@ def test_scanFile_detectionRules():
                 ]
             }
         ]
-    })
+    )
 
     assert all(key in result for key in ['id', 'message'])
     assert result['message'] == 'scan initiated'
