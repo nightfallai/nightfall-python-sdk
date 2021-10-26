@@ -48,24 +48,22 @@ class Nightfall():
 
     # Text Scan V3
 
-    def scanText(self, config: dict):
+    def scanText(self, text, config: dict):
         """
         v3 endpoint
         """
 
-        if "text" not in config.keys():
-            raise Exception("Need to supply text list with key 'text'")
         if "detectionRules" not in config.keys() and "detectionRuleUUIDs" not in config.keys():
             raise Exception("Need to supply detection rule ids list or detection rules dict with \
                 key 'detectionRuleUUIDs' or 'detectionRules' respectively")
 
         if "detectionRules" in config.keys():
-            return self._handle_detectionRules_v3(config)
+            return self._handle_detectionRules_v3(text, config)
         if "detectionRuleUUIDs" in config.keys():
-            return self._handle_detectionRuleUuids_v3(config)
+            return self._handle_detectionRuleUuids_v3(text, config)
 
-    def _handle_detectionRules_v3(self, config):
-        text_chunked = self._chunk_text(config["text"])
+    def _handle_detectionRules_v3(self, text, config):
+        text_chunked = self._chunk_text(text)
         detectionRules = config["detectionRules"]
         all_responses = []
         for payload in text_chunked:
@@ -79,8 +77,8 @@ class Nightfall():
             all_responses.extend(response.json()['findings'])
         return all_responses
 
-    def _handle_detectionRuleUuids_v3(self, config):
-        text_chunked = self._chunk_text(config["text"])
+    def _handle_detectionRuleUuids_v3(self, text, config):
+        text_chunked = self._chunk_text(text)
         detectionRuleUuids = config["detectionRuleUUIDs"]
         all_responses = []
         for payload in text_chunked:
@@ -134,7 +132,7 @@ class Nightfall():
 
     # Text Scan V2
 
-    def scanText_v2(self, config: dict):
+    def scanText_v2(self, text, config: dict):
         """Scan text with Nightfall.
 
         This method takes the specified config and then makes
@@ -143,13 +141,11 @@ class Nightfall():
         config dict should be in the following format:
         ::
             {
-                "text": ["string_to_scan",],
                 "detectionRuleUuids": ["uuid",],
             }
         or
         ::
             {
-                "text": ["string_to_scan",],
                 "detectionRules": [{detection_rule},],
             }
 
@@ -159,24 +155,24 @@ class Nightfall():
         If `detectionRules` is provided, each element in the response list
         corresponds to a single string being scanned by every detection rule.
 
+        :param text: text to scan.
+        :type text: str
         :param config: dict to scan.
         :type config: dict
         :returns: array with findings.
         """
 
-        if "text" not in config.keys():
-            raise Exception("Need to supply text list with key 'text'")
         if "detectionRules" not in config.keys() and "detectionRuleUuids" not in config.keys():
             raise Exception("Need to supply detection rule ids list or detection rules dict with \
                 key 'detectionRuleUuids' or 'detectionRules' respectively")
 
         if "detectionRules" in config.keys():
-            return self._handle_detectionRules_v2(config)
+            return self._handle_detectionRules_v2(text, config)
         if "detectionRuleUuids" in config.keys():
-            return self._handle_detectionRuleUuids_v2(config)
+            return self._handle_detectionRuleUuids_v2(text, config)
 
-    def _handle_detectionRules_v2(self, config):
-        text_chunked = self._chunk_text(config["text"])
+    def _handle_detectionRules_v2(self, text, config):
+        text_chunked = self._chunk_text(text)
         conditions = config["detectionRules"]
         all_responses = []
         for payload in text_chunked:
@@ -192,8 +188,8 @@ class Nightfall():
             all_responses.extend(response.json())
         return all_responses
 
-    def _handle_detectionRuleUuids_v2(self, config):
-        text_chunked = self._chunk_text(config["text"])
+    def _handle_detectionRuleUuids_v2(self, text, config):
+        text_chunked = self._chunk_text(text)
         detectionRuleUuids = config["detectionRuleUuids"]
         all_responses = []
         for payload in text_chunked:
