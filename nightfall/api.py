@@ -49,8 +49,27 @@ class Nightfall():
     # Text Scan V3
 
     def scanText(self, text, config: dict):
-        """
-        v3 endpoint
+        """Scan text with Nightfall.
+
+        This method takes the specified config and then makes
+        one or more requests to the Nightfall API for scanning.
+
+        config dict should be in the following format:
+        ::
+            {
+                "detectionRuleUuids": ["uuid",],
+            }
+        or
+        ::
+            {
+                "detectionRules": [{detection_rule},],
+            }
+
+        :param text: text to scan.
+        :type text: str
+        :param config: dict to scan.
+        :type config: dict
+        :returns: array with findings.
         """
 
         if "detectionRules" not in config.keys() and "detectionRuleUUIDs" not in config.keys():
@@ -133,7 +152,7 @@ class Nightfall():
     # Text Scan V2
 
     def scanText_v2(self, text, config: dict):
-        """Scan text with Nightfall.
+        """Scan text with Nightfall via the v2 endpoint.
 
         This method takes the specified config and then makes
         one or more requests to the Nightfall API for scanning.
