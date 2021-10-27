@@ -4,7 +4,7 @@ help:
 	@echo "This project assumes that an active Python virtualenv is present."
 	@echo "The following make targets are available:"
 	@echo "	dev 	install all deps for dev env"
-	@echo "	docs	create pydocs for all relveant modules"
+	@echo "	docs	create pydocs for all relevant modules"
 	@echo "	serve-docs	serve generated documentation locally"
 	@echo "	test	run all tests with coverage"
 
