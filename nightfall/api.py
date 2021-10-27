@@ -12,6 +12,8 @@ import logging
 import os
 import requests
 
+from nightfall.exceptions import NightfallUserError, NightfallSystemError
+
 
 class Nightfall():
     """A python interface for the Nightfall API.
@@ -69,8 +71,8 @@ class Nightfall():
         """
 
         if not detection_rule_uuids and not detection_rules:
-            raise Exception("Need to supply detection rule ids list or detection rules dict with \
-                key 'detection_rule_uuids' or 'detection_rules' respectively")
+            raise NightfallUserError("Need to supply detection rule ids list or detection rules dict with \
+                key 'detection_rule_uuids' or 'detection_rules' respectively", 40001)
 
         if detection_rule_uuids:
             return self._handle_detection_rule_uuids_v3(text, detection_rule_uuids)
@@ -132,7 +134,7 @@ class Nightfall():
         cur_items = 0
         for t in text:
             if len(t) > self.MAX_PAYLOAD_SIZE:
-                raise Exception(f"No individual string can exceed {self.MAX_PAYLOAD_SIZE} bytes")
+                raise NightfallUserError(f"No individual string can exceed {self.MAX_PAYLOAD_SIZE} bytes", 40000)
             if cur_size + len(t) > self.MAX_PAYLOAD_SIZE or cur_items + 1 > self.MAX_NUM_ITEMS:
                 text_chunked.append([t])
                 cur_size = len(t)
@@ -172,8 +174,8 @@ class Nightfall():
         """
 
         if not detection_rule_uuids and not detection_rules:
-            raise Exception("Need to supply detection rule ids list or detection rules dict with \
-                key 'detection_rule_uuids' or 'detection_rules' respectively")
+            raise NightfallUserError("Need to supply detection rule ids list or detection rules dict with \
+                key 'detection_rule_uuids' or 'detection_rules' respectively", 40001)
 
         if detection_rule_uuids:
             return self._handle_detection_rule_uuids_v2(text, detection_rule_uuids)
@@ -254,29 +256,26 @@ class Nightfall():
         """
 
         if not policy_uuid and not detection_rule_uuids and not detection_rules:
-            raise Exception("Need to supply policy id or detection rule ids list or detection rules dict with \
-                key 'policy_uuid', 'detection_rule_uuids', 'detection_rules' respectively")
+            raise NightfallUserError("Need to supply policy id or detection rule ids list or detection rules dict with \
+                key 'policy_uuid', 'detection_rule_uuids', 'detection_rules' respectively", 40001)
 
         response = self._file_scan_initialize(location)
-        if response.status_code != 200:
-            raise Exception(json.dumps(response.json()))
+        self._validate_response(response, 200)
         result = response.json()
         id, chunk_size = result['id'], result['chunkSize']
 
         uploaded = self._file_scan_upload(id, location, chunk_size)
         if not uploaded:
-            raise Exception("File upload failed")
+            raise NightfallSystemError("File upload failed", 50000)
 
         response = self._file_scan_finalize(id)
-        if response.status_code != 200:
-            raise Exception(json.dumps(response.json()))
+        self._validate_response(response, 200)
 
         response = self._file_scan_scan(id, webhook_url,
                                         policy_uuid=policy_uuid,
                                         detection_rule_uuids=detection_rule_uuids,
                                         detection_rules=detection_rules)
-        if response.status_code != 200:
-            raise Exception(json.dumps(response.json()))
+        self._validate_response(response, 200)
 
         return response.json()
 
@@ -316,8 +315,7 @@ class Nightfall():
                 headers = self._headers
                 headers["X-UPLOAD-OFFSET"] = str(ix * chunk_size)
                 response = upload_chunk(id, piece, headers)
-                if response.status_code != 204:
-                    raise Exception(json.dumps(response.json))
+                self._validate_response(response, 204)
 
         return True
 
@@ -372,12 +370,27 @@ class Nightfall():
 
         now = datetime.now()
         if now-timedelta(minutes=5) <= datetime.fromtimestamp(int(request_timestamp)) <= now:
-            raise Exception("could not validate timestamp is within the last few minutes")
+            raise NightfallUserError("could not validate timestamp is within the last few minutes", 40000)
         computed_signature = hmac.new(
             self.signing_secret.encode(),
             msg=F"{request_timestamp}:{request_data}".encode(),
             digestmod=hashlib.sha256
         ).hexdigest().lower()
         if computed_signature != request_signature:
-            raise Exception("could not validate signature of inbound request!")
+            raise NightfallUserError("could not validate signature of inbound request!", 40000)
         return True
+
+    # Utility
+
+    def _validate_response(self, response: requests.Response, expected_status_code: int):
+        if response.status_code == expected_status_code:
+            return
+        response_json = response.json()
+        error_code = response_json.get('code', None)
+        if error_code is not None:
+            if error_code < 40000 or error_code >= 50000:
+                raise NightfallSystemError(response.text, error_code)
+            else:
+                raise NightfallUserError(response.text, error_code)
+        else:
+            raise NightfallSystemError(response.text, 50000)
