@@ -26,5 +26,4 @@ package:
 	python -m build --sdist --wheel --outdir dist/
 
 test:
-	coverage run -m unittest discover
-	coverage html
+	pytest $(PYTEST_ARGS) --cov --cov-report html
