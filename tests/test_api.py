@@ -2,6 +2,7 @@ import os
 import pytest
 
 from nightfall.api import Nightfall
+from nightfall.exceptions import NightfallUserError
 
 
 @pytest.fixture
@@ -94,7 +95,7 @@ def test_chunking_huge_item_list(nightfall):
 
     large_item_list = ["x" * 600000]
 
-    with pytest.raises(Exception):
+    with pytest.raises(NightfallUserError):
         nightfall._chunk_text(large_item_list)
 
 
