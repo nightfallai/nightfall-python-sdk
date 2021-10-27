@@ -4,9 +4,12 @@ import pytest
 from nightfall.api import Nightfall
 
 
-def test_scan_text_detection_rules_v2():
-    nightfall = Nightfall(os.environ['NIGHTFALL_API_KEY'])
+@pytest.fixture
+def nightfall():
+    yield Nightfall(os.environ['NIGHTFALL_API_KEY'])
 
+
+def test_scan_text_detection_rules_v2(nightfall):
     result = nightfall.scan_text_v2(
         ["4916-6734-7572-5015 is my credit card number"],
         detection_rules=[
@@ -25,9 +28,7 @@ def test_scan_text_detection_rules_v2():
     assert len(result) == 1
 
 
-def test_scan_text_detection_rules_v3():
-    nightfall = Nightfall(os.environ['NIGHTFALL_API_KEY'])
-
+def test_scan_text_detection_rules_v3(nightfall):
     result = nightfall.scan_text(
         ["4916-6734-7572-5015 is my credit card number"],
         detection_rules=[
@@ -52,13 +53,11 @@ def test_scan_text_detection_rules_v3():
     assert len(result) == 1
 
 
-def test_chunking_big_item_list():
+def test_chunking_big_item_list(nightfall):
     """
     a list of 10 strings that are 500KB each should turn into a
     list of 10 lists with one item per list
     """
-    nightfall = Nightfall(os.environ['NIGHTFALL_API_KEY'])
-
     large_list = ["x" * 500000 for _ in range(10)]
 
     chunks = nightfall._chunk_text(large_list)
@@ -71,13 +70,11 @@ def test_chunking_big_item_list():
     assert len(chunks) == 10
 
 
-def test_chunking_many_items_list():
+def test_chunking_many_items_list(nightfall):
     """
     A list of 100,000 single byte items should turn into two lists each
     with 50,000 items.
     """
-    nightfall = Nightfall(os.environ['NIGHTFALL_API_KEY'])
-
     many_list = ["x" for _ in range(100000)]
 
     chunks = nightfall._chunk_text(many_list)
@@ -92,9 +89,8 @@ def test_chunking_many_items_list():
     assert len(chunks) == 2
 
 
-def test_chunking_huge_item_list():
+def test_chunking_huge_item_list(nightfall):
     """A single 600kb string should raise an exception"""
-    nightfall = Nightfall(os.environ['NIGHTFALL_API_KEY'])
 
     large_item_list = ["x" * 600000]
 
@@ -102,9 +98,7 @@ def test_chunking_huge_item_list():
         nightfall._chunk_text(large_item_list)
 
 
-def test_scan_file_detection_rules():
-    nightfall = Nightfall(os.environ['NIGHTFALL_API_KEY'])
-
+def test_scan_file_detection_rules(nightfall):
     file = "file.txt"
 
     with open(file, "w") as fp:
