@@ -2,27 +2,7 @@ import os
 import pytest
 
 from nightfall.api import Nightfall
-
-
-def test_scan_text_detection_rules_v2():
-    nightfall = Nightfall(os.environ['NIGHTFALL_API_KEY'])
-
-    result = nightfall.scan_text_v2(
-        ["4916-6734-7572-5015 is my credit card number"],
-        detection_rules=[
-            {
-                "minNumFindings": 1,
-                "minConfidence": "LIKELY",
-                "detector": {
-                    "displayName": "Credit Card Number",
-                    "detectorType": "NIGHTFALL_DETECTOR",
-                    "nightfallDetector": "CREDIT_CARD_NUMBER"
-                }
-            }
-        ]
-    )
-
-    assert len(result) == 1
+from nightfall.detection_rules import DetectionRule, Detector
 
 
 def test_scan_text_detection_rules_v3():
@@ -30,76 +10,11 @@ def test_scan_text_detection_rules_v3():
 
     result = nightfall.scan_text(
         ["4916-6734-7572-5015 is my credit card number"],
-        detection_rules=[
-            {
-                "name": "string",
-                "logicalOp": "ANY",
-                "minNumFindings": 1,
-                "minConfidence": "POSSIBLE",
-                "detectors": [
-                    {
-                        "minNumFindings": 1,
-                        "minConfidence": "POSSIBLE",
-                        "displayName": "Credit Card Number",
-                        "detectorType": "NIGHTFALL_DETECTOR",
-                        "nightfallDetector": "CREDIT_CARD_NUMBER"
-                    }
-                ]
-            }
-        ]
+        detection_rules=[DetectionRule([Detector(min_confidence="LIKELY", min_num_findings=1,
+                                 display_name="Credit Card Number", nightfall_detector="CREDIT_CARD_NUMBER")])]
     )
 
     assert len(result) == 1
-
-
-def test_chunking_big_item_list():
-    """
-    a list of 10 strings that are 500KB each should turn into a
-    list of 10 lists with one item per list
-    """
-    nightfall = Nightfall(os.environ['NIGHTFALL_API_KEY'])
-
-    large_list = ["x" * 500000 for _ in range(10)]
-
-    chunks = nightfall._chunk_text(large_list)
-
-    for c in chunks:
-        assert len(c) <= nightfall.MAX_NUM_ITEMS
-        assert len(c) == 1
-        assert sum([len(string_to_scan) for string_to_scan in c]) <= nightfall.MAX_PAYLOAD_SIZE
-
-    assert len(chunks) == 10
-
-
-def test_chunking_many_items_list():
-    """
-    A list of 100,000 single byte items should turn into two lists each
-    with 50,000 items.
-    """
-    nightfall = Nightfall(os.environ['NIGHTFALL_API_KEY'])
-
-    many_list = ["x" for _ in range(100000)]
-
-    chunks = nightfall._chunk_text(many_list)
-
-    for i, c in enumerate(chunks):
-        if i == len(chunks) - 1:
-            assert len(c) <= nightfall.MAX_NUM_ITEMS
-        else:
-            assert len(c) == nightfall.MAX_NUM_ITEMS
-        assert sum([len(string_to_scan) for string_to_scan in c]) <= nightfall.MAX_PAYLOAD_SIZE
-
-    assert len(chunks) == 2
-
-
-def test_chunking_huge_item_list():
-    """A single 600kb string should raise an exception"""
-    nightfall = Nightfall(os.environ['NIGHTFALL_API_KEY'])
-
-    large_item_list = ["x" * 600000]
-
-    with pytest.raises(Exception):
-        nightfall._chunk_text(large_item_list)
 
 
 def test_scan_file_detection_rules():

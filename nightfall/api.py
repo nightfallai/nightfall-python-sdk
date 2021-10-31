@@ -12,10 +12,11 @@ import logging
 import os
 import requests
 
+from nightfall.detection_rules import DetectionRule
 from nightfall.exceptions import NightfallUserError, NightfallSystemError
 
 
-class Nightfall():
+class Nightfall:
     """A python interface for the Nightfall API.
     .. data:: MAX_PAYLOAD_SIZE
         Maximum payload size in bytes that the Nightfall API will accept
@@ -33,12 +34,16 @@ class Nightfall():
     FILE_SCAN_COMPLETE_ENDPOINT = PLATFORM_URL + "/v3/upload/{0}/finish"
     FILE_SCAN_SCAN_ENDPOINT = PLATFORM_URL + "/v3/upload/{0}/scan"
 
-    def __init__(self, key: str, signing_secret: str = None):
+    def __init__(self, key: str = None, signing_secret: str = None):
         """Instantiate a new Nightfall object.
         :param key: Your Nightfall API key.
         :param signing_secret: Your Nightfall signing secret used for webhook validation.
         """
-        self.key = key
+        if key:
+            self.key = key
+        else:
+            self.key = os.getenv("NIGHTFALL_API_KEY")
+
         self._headers = {
             "Content-Type": "application/json",
             "User-Agent": "nightfall-python-sdk/1.0.0",
@@ -50,16 +55,17 @@ class Nightfall():
 
     # Text Scan V3
 
-    def scan_text(self, text: str, detection_rule_uuids: list = None, detection_rules: list = None):
-        """Scan text with Nightfall.
+    def scan_text(self, text: list[str], detection_rule_uuids: list[str] = None,
+                  detection_rules: list[DetectionRule] = None):
+        f"""Scan text with Nightfall.
 
         This method takes the specified config and then makes
         one or more requests to the Nightfall API for scanning.
 
-        Either detection_rule_uuids or detection_rules is required.
+        Either detection_rule_uuids or DetectionRule is required.
         ::
             detection_rule_uuids: ["uuid",]
-            detection_rules: [{detection_rule},]
+            detection_rules: [DetectionRule,]
 
         :param text: text to scan.
         :type text: str
@@ -74,148 +80,21 @@ class Nightfall():
             raise NightfallUserError("Need to supply detection rule ids list or detection rules dict with \
                 key 'detection_rule_uuids' or 'detection_rules' respectively", 40001)
 
+        config = {}
         if detection_rule_uuids:
-            return self._handle_detection_rule_uuids_v3(text, detection_rule_uuids)
+            config["detectionRuleUUIDs"] = detection_rule_uuids
         if detection_rules:
-            return self._handle_detection_rules_v3(text, detection_rules)
-
-    def _handle_detection_rule_uuids_v3(self, text, detection_rule_uuids):
-        text_chunked = self._chunk_text(text)
-        all_responses = []
-        for payload in text_chunked:
-            request_body = {
-                "payload": payload,
-                "config": {
-                    "detectionRuleUUIDs": detection_rule_uuids
-                }
-            }
-            response = self._scan_text_v3(request_body)
-            all_responses.extend(response.json()['findings'])
-        return all_responses
-
-    def _handle_detection_rules_v3(self, text, detection_rules):
-        text_chunked = self._chunk_text(text)
-        all_responses = []
-        for payload in text_chunked:
-            request_body = {
-                "payload": payload,
-                "config": {
-                    "detectionRules": detection_rules
-                }
-            }
-            response = self._scan_text_v3(request_body)
-            all_responses.extend(response.json()['findings'])
-        return all_responses
+            config["detectionRules"] = [d.as_dict() for d in detection_rules]
+        request_body = {
+            "payload": text,
+            "config": config
+        }
+        response = self._scan_text_v3(request_body)
+        return response.json()['findings']
 
     def _scan_text_v3(self, data):
         response = requests.post(
             url=self.TEXT_SCAN_ENDPOINT_V3,
-            headers=self._headers,
-            data=json.dumps(data)
-        )
-
-        # Logs for Debugging
-        self.logger.debug(f"HTTP Request URL: {response.request.url}")
-        self.logger.debug(f"HTTP Request Body: {response.request.body}")
-        self.logger.debug(f"HTTP Request Headers: {response.request.headers}")
-
-        self.logger.debug(f"HTTP Status Code: {response.status_code}")
-        self.logger.debug(f"HTTP Response Headers: {response.headers}")
-        self.logger.debug(f"HTTP Response Text: {response.text}")
-
-        return response
-
-    def _chunk_text(self, text):
-        payload_size = sum([len(string_to_scan) for string_to_scan in text])
-        if payload_size <= self.MAX_PAYLOAD_SIZE and len(text) < self.MAX_NUM_ITEMS:
-            return [text]
-        text_chunked = [[]]
-        cur_size = 0
-        cur_items = 0
-        for t in text:
-            if len(t) > self.MAX_PAYLOAD_SIZE:
-                raise NightfallUserError(f"No individual string can exceed {self.MAX_PAYLOAD_SIZE} bytes", 40000)
-            if cur_size + len(t) > self.MAX_PAYLOAD_SIZE or cur_items + 1 > self.MAX_NUM_ITEMS:
-                text_chunked.append([t])
-                cur_size = len(t)
-                cur_items = 1
-            else:
-                text_chunked[-1].append(t)
-                cur_size += len(t)
-                cur_items += 1
-        return text_chunked
-
-    # Text Scan V2
-
-    def scan_text_v2(self, text: str, detection_rule_uuids: list = None, detection_rules: list = None):
-        """Scan text with Nightfall via the v2 endpoint.
-
-        This method takes the specified config and then makes
-        one or more requests to the Nightfall API for scanning.
-
-        Either detection_rule_uuids or detection_rules is required.
-        ::
-            detection_rule_uuids: ["uuid",]
-            detection_rules: [{detection_rule},]
-
-        If `detection_rule_uuids` is provided, each element in the response list
-        correponds to a single detection rule being applied to each string in the text list.
-
-        If `detection_rules` is provided, each element in the response list
-        corresponds to a single string being scanned by every detection rule.
-
-        :param text: text to scan.
-        :type text: str
-        :param detection_rule_uuids: list of detection rule UUIDs.
-        :type detection_rule_uuids: list
-        :param detection_rules: list of detection rules.
-        :type detection_rules: list
-        :returns: array with findings.
-        """
-
-        if not detection_rule_uuids and not detection_rules:
-            raise NightfallUserError("Need to supply detection rule ids list or detection rules dict with \
-                key 'detection_rule_uuids' or 'detection_rules' respectively", 40001)
-
-        if detection_rule_uuids:
-            return self._handle_detection_rule_uuids_v2(text, detection_rule_uuids)
-        if detection_rules:
-            return self._handle_detection_rules_v2(text, detection_rules)
-
-    def _handle_detection_rule_uuids_v2(self, text, detection_rule_uuids):
-        text_chunked = self._chunk_text(text)
-        all_responses = []
-        for payload in text_chunked:
-            for detection_rule_uuid in detection_rule_uuids:
-                request_body = {
-                    "payload": payload,
-                    "config": {
-                        "conditionSetUUID": detection_rule_uuid
-                    }
-                }
-                response = self._scan_text_v2(request_body)
-                all_responses.append(response.json())
-        return all_responses
-
-    def _handle_detection_rules_v2(self, text, detection_rules):
-        text_chunked = self._chunk_text(text)
-        all_responses = []
-        for payload in text_chunked:
-            request_body = {
-                "payload": payload,
-                "config": {
-                    "conditionSet": {
-                        "conditions": detection_rules
-                    }
-                }
-            }
-            response = self._scan_text_v2(request_body)
-            all_responses.extend(response.json())
-        return all_responses
-
-    def _scan_text_v2(self, data):
-        response = requests.post(
-            url=self.TEXT_SCAN_ENDPOINT_V2,
             headers=self._headers,
             data=json.dumps(data)
         )
