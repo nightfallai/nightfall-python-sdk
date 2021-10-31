@@ -37,12 +37,17 @@ class Nightfall:
     def __init__(self, key: str = None, signing_secret: str = None):
         """Instantiate a new Nightfall object.
         :param key: Your Nightfall API key.
+        :type key: str or None
         :param signing_secret: Your Nightfall signing secret used for webhook validation.
+        :type signing_secret: str or None
         """
         if key:
             self.key = key
         else:
             self.key = os.getenv("NIGHTFALL_API_KEY")
+
+        if not key:
+            raise NightfallUserError("need an API key either in constructor or in NIGHTFALL_API_KEY environment var")
 
         self._headers = {
             "Content-Type": "application/json",
@@ -55,9 +60,9 @@ class Nightfall:
 
     # Text Scan V3
 
-    def scan_text(self, text: list[str], detection_rule_uuids: list[str] = None,
+    def scan_text(self, texts: list[str], detection_rule_uuids: list[str] = None,
                   detection_rules: list[DetectionRule] = None):
-        f"""Scan text with Nightfall.
+        """Scan text with Nightfall.
 
         This method takes the specified config and then makes
         one or more requests to the Nightfall API for scanning.
@@ -67,13 +72,14 @@ class Nightfall:
             detection_rule_uuids: ["uuid",]
             detection_rules: [DetectionRule,]
 
-        :param text: text to scan.
-        :type text: str
-        :param detection_rule_uuids: list of detection rule UUIDs.
-        :type detection_rule_uuids: list
-        :param detection_rules: list of detection rules.
-        :type detection_rules: list
-        :returns: array with findings.
+        :param texts: List of strings to scan.
+        :type texts: list[str]
+        :param detection_rule_uuids: List of detection rule UUIDs to scan each text with.
+            These can be created in the Nightfall UI.
+        :type detection_rule_uuids: list[str] or None
+        :param detection_rules: List of detection rules to scan each text with.
+        :type detection_rules: list[DetectionRule] or None
+        :returns: list of findings, list of redacted input texts
         """
 
         if not detection_rule_uuids and not detection_rules:
@@ -86,11 +92,16 @@ class Nightfall:
         if detection_rules:
             config["detectionRules"] = [d.as_dict() for d in detection_rules]
         request_body = {
-            "payload": text,
+            "payload": texts,
             "config": config
         }
         response = self._scan_text_v3(request_body)
-        return response.json()['findings']
+
+        _validate_response(response, 200)
+
+        parsed_response = response.json()
+
+        return parsed_response["findings"], parsed_response["redactedPayload"]
 
     def _scan_text_v3(self, data):
         response = requests.post(
@@ -113,7 +124,7 @@ class Nightfall:
     # File Scan
 
     def scan_file(self, location: str, webhook_url: str, policy_uuid: str = None,
-                  detection_rule_uuids: list = None, detection_rules: list = None):
+                  detection_rule_uuids: list[str] = None, detection_rules: list[DetectionRule] = None):
         """Scan file with Nightfall.
 
         Either policy_uuid or detection_rule_uuids or detection_rules is required.
@@ -123,15 +134,14 @@ class Nightfall:
             detection_rules: [{detection_rule},]
 
         :param location: location of file to scan.
-        :type text: str
         :param webhook_url: webhook endpoint which will receive the results of the scan.
         :type text: str
         :param policy_uuid: policy UUID.
-        :type policy_uuid: str
+        :type policy_uuid: str or None
         :param detection_rule_uuids: list of detection rule UUIDs.
-        :type detection_rule_uuids: list
+        :type detection_rule_uuids: list[str] or None
         :param detection_rules: list of detection rules.
-        :type detection_rules: list
+        :type detection_rules: list[DetectionRule] or None
         """
 
         if not policy_uuid and not detection_rule_uuids and not detection_rules:
@@ -139,22 +149,22 @@ class Nightfall:
                 key 'policy_uuid', 'detection_rule_uuids', 'detection_rules' respectively", 40001)
 
         response = self._file_scan_initialize(location)
-        self._validate_response(response, 200)
+        _validate_response(response, 200)
         result = response.json()
-        id, chunk_size = result['id'], result['chunkSize']
+        session_id, chunk_size = result['id'], result['chunkSize']
 
-        uploaded = self._file_scan_upload(id, location, chunk_size)
+        uploaded = self._file_scan_upload(session_id, location, chunk_size)
         if not uploaded:
             raise NightfallSystemError("File upload failed", 50000)
 
-        response = self._file_scan_finalize(id)
-        self._validate_response(response, 200)
+        response = self._file_scan_finalize(session_id)
+        _validate_response(response, 200)
 
-        response = self._file_scan_scan(id, webhook_url,
+        response = self._file_scan_scan(session_id, webhook_url,
                                         policy_uuid=policy_uuid,
                                         detection_rule_uuids=detection_rule_uuids,
                                         detection_rules=detection_rules)
-        self._validate_response(response, 200)
+        _validate_response(response, 200)
 
         return response.json()
 
@@ -170,7 +180,7 @@ class Nightfall:
 
         return response
 
-    def _file_scan_upload(self, id, location: str, chunk_size: int):
+    def _file_scan_upload(self, session_id, location: str, chunk_size: int):
 
         def read_chunks(fp, chunk_size):
             ix = 0
@@ -193,40 +203,31 @@ class Nightfall:
             for ix, piece in read_chunks(fp, chunk_size):
                 headers = self._headers
                 headers["X-UPLOAD-OFFSET"] = str(ix * chunk_size)
-                response = upload_chunk(id, piece, headers)
-                self._validate_response(response, 204)
+                response = upload_chunk(session_id, piece, headers)
+                _validate_response(response, 204)
 
         return True
 
-    def _file_scan_finalize(self, id):
+    def _file_scan_finalize(self, session_id):
         response = requests.post(
-            url=self.FILE_SCAN_COMPLETE_ENDPOINT.format(id),
+            url=self.FILE_SCAN_COMPLETE_ENDPOINT.format(session_id),
             headers=self._headers
         )
         return response
 
-    def _file_scan_scan(self, id, webhook_url, policy_uuid: str, detection_rule_uuids: str, detection_rules: str):
+    def _file_scan_scan(self, session_id: str, webhook_url: str, policy_uuid: str,
+                        detection_rule_uuids: str, detection_rules: list[DetectionRule]):
         if policy_uuid:
-            data = {
-                "policyUUID": policy_uuid
-            }
-        elif detection_rule_uuids:
-            data = {
-                "policy": {
-                    "webhookURL": webhook_url,
-                    "detectionRuleUUIDs": detection_rule_uuids
-                }
-            }
+            data = {"policyUUID": policy_uuid}
         else:
-            data = {
-                "policy": {
-                    "webhookURL": webhook_url,
-                    "detectionRules": detection_rules
-                }
-            }
+            data = {"policy": {"webhookURL": webhook_url}}
+            if detection_rule_uuids:
+                data["detectionRuleUUIDs"] = detection_rule_uuids
+            if detection_rules:
+                data["detectionRules"] = [d.as_dict() for d in detection_rules]
 
         response = requests.post(
-            url=self.FILE_SCAN_SCAN_ENDPOINT.format(id),
+            url=self.FILE_SCAN_SCAN_ENDPOINT.format(session_id),
             headers=self._headers,
             data=json.dumps(data)
         )
@@ -259,17 +260,17 @@ class Nightfall:
             raise NightfallUserError("could not validate signature of inbound request!", 40000)
         return True
 
-    # Utility
 
-    def _validate_response(self, response: requests.Response, expected_status_code: int):
-        if response.status_code == expected_status_code:
-            return
-        response_json = response.json()
-        error_code = response_json.get('code', None)
-        if error_code is not None:
-            if error_code < 40000 or error_code >= 50000:
-                raise NightfallSystemError(response.text, error_code)
-            else:
-                raise NightfallUserError(response.text, error_code)
+# Utility
+def _validate_response(response: requests.Response, expected_status_code: int):
+    if response.status_code == expected_status_code:
+        return
+    response_json = response.json()
+    error_code = response_json.get('code', None)
+    if error_code is not None:
+        if error_code < 40000 or error_code >= 50000:
+            raise NightfallSystemError(response.text, error_code)
         else:
-            raise NightfallSystemError(response.text, 50000)
+            raise NightfallUserError(response.text, error_code)
+    else:
+        raise NightfallSystemError(response.text, 50000)
