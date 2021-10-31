@@ -27,7 +27,7 @@ def test_scan_file_detection_rules(nightfall):
     with open(file, "w") as fp:
         fp.write("4916-6734-7572-5015 is my credit card number")
 
-    result = nightfall.scan_file(
+    id, message = nightfall.scan_file(
         file,
         os.environ['WEBHOOK_ENDPOINT'],
         detection_rules=[DetectionRule([Detector(min_confidence="LIKELY", min_num_findings=1,
@@ -35,5 +35,5 @@ def test_scan_file_detection_rules(nightfall):
                                                  nightfall_detector="CREDIT_CARD_NUMBER")])]
     )
 
-    assert all(key in result for key in ['id', 'message'])
-    assert result['message'] == 'scan initiated'
+    assert id is not None
+    assert message == 'scan initiated'

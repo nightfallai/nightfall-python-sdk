@@ -204,9 +204,9 @@ class Nightfall:
         else:
             data = {"policy": {"webhookURL": webhook_url}}
             if detection_rule_uuids:
-                data["detectionRuleUUIDs"] = detection_rule_uuids
+                data["policy"]["detectionRuleUUIDs"] = detection_rule_uuids
             if detection_rules:
-                data["detectionRules"] = [d.as_dict() for d in detection_rules]
+                data["policy"]["detectionRules"] = [d.as_dict() for d in detection_rules]
 
         response = requests.post(
             url=self.FILE_SCAN_SCAN_ENDPOINT.format(session_id),
