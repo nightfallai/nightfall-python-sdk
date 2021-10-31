@@ -1,3 +1,5 @@
+from enum import Enum
+
 from nightfall.exceptions import NightfallUserError
 
 
@@ -33,12 +35,21 @@ class WordList:
         return {"wordList": self.word_list, "isCaseSensitive": self.is_case_sensitive}
 
 
+class Confidence(Enum):
+    """Confidence describes the certainty that a piece of content matches a detector."""
+    VERY_UNLIKELY = "VERY_UNLIKELY"
+    UNLIKELY = "UNLIKELY"
+    POSSIBLE = "POSSIBLE"
+    LIKELY = "LIKELY"
+    VERY_LIKELY = "VERY_LIKELY"
+
+
 class ContextRule:
     """An object that describes how a regular expression may be used to adjust the confidence of a candidate finding.
     This context rule will be applied within the provided byte proximity, and if the regular expression matches, then
     the confidence associated with the finding will be adjusted to the value prescribed.
     """
-    def __init__(self, regex: Regex, window_before: int, window_after: int, fixed_confidence: str):
+    def __init__(self, regex: Regex, window_before: int, window_after: int, fixed_confidence: Confidence):
         """Instantiate a ContextRule object
         :param regex: The regular expression configuration to run within the context of a candidate finding.
         :type regex: Regex
@@ -47,8 +58,7 @@ class ContextRule:
         :param window_after: The number of trailing characters to consider as context.
         :type window_after: int
         :param fixed_confidence: How to adjust the result of the match if the context rule matches.
-            One of "VERY_UNLIKELY", "UNLIKELY", "POSSIBLE", "LIKELY", "VERY_LIKELY".
-        :type fixed_confidence: str
+        :type fixed_confidence: Confidence
         """
         self.regex = regex
         self.window_before = window_before
@@ -59,7 +69,7 @@ class ContextRule:
         return {
             "regex": self.regex,
             "proximity": {"windowBefore": self.window_before, "windowAfter": self.window_after},
-            "confidenceAdjustment": {"fixedConfidence": self.fixed_confidence}
+            "confidenceAdjustment": {"fixedConfidence": self.fixed_confidence.value}
         }
 
 
@@ -187,7 +197,7 @@ class Detector:
     """
     def __init__(
             self,
-            min_confidence: str,
+            min_confidence: Confidence,
             min_num_findings: int,
             nightfall_detector: str = None,
             regex: Regex = None,
@@ -202,7 +212,7 @@ class Detector:
         One of nightfall_detector, regex, word_list or uuid required.
 
         :param min_confidence: The minimum confidence threshold for the detector trigger a finding.
-        :type min_confidence: str
+        :type min_confidence: Confidence
         :param min_num_findings: The minimum number of occurrences of the detector required to trigger a finding.
         :type min_num_findings: int
         :param nightfall_detector: Create an instance of a detector based on a pre-built Nightfall detector.
@@ -238,7 +248,7 @@ class Detector:
         self.redaction_config = redaction_config
 
     def as_dict(self):
-        result = {"minConfidence": self.min_confidence, "minNumFindings": self.min_num_findings}
+        result = {"minConfidence": self.min_confidence.value, "minNumFindings": self.min_num_findings}
         if self.nightfall_detector:
             result["nightfallDetector"] = self.nightfall_detector
             result["detectorType"] = "NIGHTFALL_DETECTOR"
@@ -261,20 +271,31 @@ class Detector:
         return result
 
 
+class LogicalOp(Enum):
+    """ A modifier that is used to decide when a finding should be surfaced in the context of a detection rule.
+    - When ALL is specified, all detectors in a detection rule must trigger a match in order for the finding to be
+      reported. This is the equivalent of a logical "AND" operator.
+    - When ANY is specified, only one of the detectors in a detection rule must trigger a match in order for the finding
+      to be reported. This is the equivalent of a logical "OR" operator.
+    """
+    ANY = "ANY"
+    ALL = "ALL"
+
+
 class DetectionRule:
     """An object that contains a set of detectors to be used when scanning content."""
-    def __init__(self, detectors: list[Detector], logical_op: str = "ANY"):
+    def __init__(self, detectors: list[Detector], logical_op: LogicalOp = LogicalOp.ANY):
         """Instantiate a DetectionRule
         :param detectors: A list of Detectors to scan content with.
         :type detectors: list[Detector]
         :param logical_op: The method for combining the detectors. One of:
-          - "ANY" (logical or, i.e. a finding is emitted only if any of the provided detectors match)
-          - "ALL" (logical and, i.e. a finding is emitted only if all provided detectors match)
-        :type logical_op: str
+          - LogicalOp.ANY (logical or, i.e. a finding is emitted only if any of the provided detectors match)
+          - LogicalOp.ALL (logical and, i.e. a finding is emitted only if all provided detectors match)
+        :type logical_op: LogicalOp
         """
         self.detectors = detectors
         self.logical_op = logical_op
 
     def as_dict(self):
-        return {"detectors": [d.as_dict() for d in self.detectors], "logicalOp": self.logical_op}
+        return {"detectors": [d.as_dict() for d in self.detectors], "logicalOp": self.logical_op.value}
 

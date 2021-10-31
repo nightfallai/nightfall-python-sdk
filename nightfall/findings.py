@@ -1,3 +1,6 @@
+from nightfall.detection_rules import Confidence
+
+
 class Range:
     """An object representing where a finding was discovered in content."""
     def __init__(self, start: int, end: int):
@@ -20,7 +23,7 @@ class Finding:
                  after_context: str,
                  detector_name: str,
                  detector_uuid: str,
-                 confidence: str,
+                 confidence: Confidence,
                  byte_range: Range,
                  codepoint_range: Range,
                  matched_detection_rule_uuids: list[str],
@@ -40,7 +43,7 @@ class Finding:
         :param detector_uuid: The ID that uniquely identifies this detector.
         :type detector_uuid: str
         :param confidence: The confidence that the data contained in Finding is an instance of the matched detector.
-        :type confidence: str
+        :type confidence: Confidence
         :param byte_range: The byte range in which a finding was detected within the item.
         :type byte_range: Range
         :param codepoint_range: The codepoint range in which a finding was detected within the item. This differs
@@ -74,7 +77,7 @@ class Finding:
             resp.get("afterContext"),
             resp["detector"].get("name"),
             resp["detector"].get("uuid"),
-            resp["confidence"],
+            Confidence[resp["confidence"]],
             Range(resp["location"]["byteRange"]["start"], resp["location"]["byteRange"]["end"]),
             Range(resp["location"]["codepointRange"]["start"], resp["location"]["codepointRange"]["end"]),
             resp["matchedDetectionRuleUUIDs"],
