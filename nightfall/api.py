@@ -14,6 +14,7 @@ import requests
 
 from nightfall.detection_rules import DetectionRule
 from nightfall.exceptions import NightfallUserError, NightfallSystemError
+from nightfall.findings import Finding
 
 
 class Nightfall:
@@ -48,16 +49,13 @@ class Nightfall:
         self.logger = logging.getLogger(__name__)
 
     def scan_text(self, texts: list[str], detection_rule_uuids: list[str] = None,
-                  detection_rules: list[DetectionRule] = None):
+                  detection_rules: list[DetectionRule] = None) -> [list[list[Finding]], list[str]]:
         """Scan text with Nightfall.
 
         This method takes the specified config and then makes
         one or more requests to the Nightfall API for scanning.
+        At least one of detection_rule_uuids or detection_rules is required.
 
-        Either detection_rule_uuids or DetectionRule is required.
-        ::
-            detection_rule_uuids: ["uuid",]
-            detection_rules: [DetectionRule,]
 
         :param texts: List of strings to scan.
         :type texts: list[str]
@@ -70,8 +68,7 @@ class Nightfall:
         """
 
         if not detection_rule_uuids and not detection_rules:
-            raise NightfallUserError("Need to supply detection rule ids list or detection rules dict with \
-                key 'detection_rule_uuids' or 'detection_rules' respectively", 40001)
+            raise NightfallUserError("at least one of detection_rule_uuids or detection_rules required", 40001)
 
         config = {}
         if detection_rule_uuids:
@@ -88,7 +85,9 @@ class Nightfall:
 
         parsed_response = response.json()
 
-        return parsed_response["findings"], parsed_response["redactedPayload"]
+        findings = [[Finding.from_dict(f) for f in item_findings] for item_findings in parsed_response["findings"]]
+        return findings, parsed_response.get("redactedPayload")
+
 
     def _scan_text_v3(self, data):
         response = requests.post(
@@ -131,8 +130,8 @@ class Nightfall:
         """
 
         if not policy_uuid and not detection_rule_uuids and not detection_rules:
-            raise NightfallUserError("Need to supply policy id or detection rule ids list or detection rules dict with \
-                key 'policy_uuid', 'detection_rule_uuids', 'detection_rules' respectively", 40001)
+            raise NightfallUserError("at least one of policy_uuid, detection_rule_uuids or detection_rules required",
+                                     40001)
 
         response = self._file_scan_initialize(location)
         _validate_response(response, 200)

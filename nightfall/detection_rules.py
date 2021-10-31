@@ -68,7 +68,9 @@ class ExclusionRule:
     candidate finding from triggering a detector match.
     """
     def __init__(self, match_type: str, regex: Regex = None, word_list: WordList = None):
-        """Instantiate an ExclusionRule object
+        """Instantiate an ExclusionRule object.
+        One of regex or word_list is required.
+
         :param match_type: the match type. One of "FULL" or "PARTIAL".
         :type match_type: str
         :param regex: The regular expression configuration to run on a candidate finding.
@@ -141,7 +143,9 @@ class RedactionConfig:
             infotype_substitution: bool = False,
             public_key: str = None
     ):
-        """Instantiate a RedactionConfig object
+        """Instantiate a RedactionConfig object.
+        One of mask_config, substitution_phrase, infotype_substitution or public_key is required.
+
         :param remove_finding: Whether the original finding should be omitted in responses from the API.
         :type remove_finding: bool
         :param mask_config: Build a redaction config with masking.
@@ -194,7 +198,9 @@ class Detector:
             exclusion_rules: list[ExclusionRule] = None,
             redaction_config: RedactionConfig = None
     ):
-        """Instantiate a Detector object
+        """Instantiate a Detector object.
+        One of nightfall_detector, regex, word_list or uuid required.
+
         :param min_confidence: The minimum confidence threshold for the detector trigger a finding.
         :type min_confidence: str
         :param min_num_findings: The minimum number of occurrences of the detector required to trigger a finding.
