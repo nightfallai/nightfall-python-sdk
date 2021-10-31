@@ -88,7 +88,6 @@ class Nightfall:
         findings = [[Finding.from_dict(f) for f in item_findings] for item_findings in parsed_response["findings"]]
         return findings, parsed_response.get("redactedPayload")
 
-
     def _scan_text_v3(self, data):
         response = requests.post(
             url=self.TEXT_SCAN_ENDPOINT_V3,
@@ -110,14 +109,10 @@ class Nightfall:
     # File Scan
 
     def scan_file(self, location: str, webhook_url: str, policy_uuid: str = None,
-                  detection_rule_uuids: list[str] = None, detection_rules: list[DetectionRule] = None):
+                  detection_rule_uuids: list[str] = None, detection_rules: list[DetectionRule] = None,
+                  ) -> [str, str]:
         """Scan file with Nightfall.
-
-        Either policy_uuid or detection_rule_uuids or detection_rules is required.
-        ::
-            policy_uuid: "uuid"
-            detection_rule_uuids: ["uuid",]
-            detection_rules: [{detection_rule},]
+        At least one of policy_uuid, detection_rule_uuids or detection_rules is required.
 
         :param location: location of file to scan.
         :param webhook_url: webhook endpoint which will receive the results of the scan.
@@ -127,6 +122,7 @@ class Nightfall:
         :type detection_rule_uuids: list[str] or None
         :param detection_rules: list of detection rules.
         :type detection_rules: list[DetectionRule] or None
+        :returns: (scan_id, message)
         """
 
         if not policy_uuid and not detection_rule_uuids and not detection_rules:
@@ -150,8 +146,9 @@ class Nightfall:
                                         detection_rule_uuids=detection_rule_uuids,
                                         detection_rules=detection_rules)
         _validate_response(response, 200)
+        parsed_response = response.json()
 
-        return response.json()
+        return parsed_response["id"], parsed_response["message"]
 
     def _file_scan_initialize(self, location: str):
         data = {
@@ -218,7 +215,7 @@ class Nightfall:
         )
         return response
 
-    def validate_webhook(self, request_signature: str, request_timestamp: str, request_data: str):
+    def validate_webhook(self, request_signature: str, request_timestamp: str, request_data: str) -> bool:
         """
         Validate the integrity of webhook requests coming from Nightfall.
 
