@@ -17,17 +17,7 @@ from nightfall.exceptions import NightfallUserError, NightfallSystemError
 
 
 class Nightfall:
-    """A python interface for the Nightfall API.
-    .. data:: MAX_PAYLOAD_SIZE
-        Maximum payload size in bytes that the Nightfall API will accept
-    .. data:: MAX_NUM_ITEMS
-        Maximum number of items that the Nightfall API will accept
-    """
-    MAX_PAYLOAD_SIZE = 500_000
-    MAX_NUM_ITEMS = 50_000
-
     PLATFORM_URL = "https://api.nightfall.ai"
-    TEXT_SCAN_ENDPOINT_V2 = PLATFORM_URL + "/v2/scan"
     TEXT_SCAN_ENDPOINT_V3 = PLATFORM_URL + "/v3/scan"
     FILE_SCAN_INITIALIZE_ENDPOINT = PLATFORM_URL + "/v3/upload"
     FILE_SCAN_UPLOAD_ENDPOINT = PLATFORM_URL + "/v3/upload/{0}"
@@ -36,7 +26,7 @@ class Nightfall:
 
     def __init__(self, key: str = None, signing_secret: str = None):
         """Instantiate a new Nightfall object.
-        :param key: Your Nightfall API key.
+        :param key: Your Nightfall API key. If None it will be read from the environment variable NIGHTFALL_API_KEY.
         :type key: str or None
         :param signing_secret: Your Nightfall signing secret used for webhook validation.
         :type signing_secret: str or None
@@ -52,13 +42,10 @@ class Nightfall:
         self._headers = {
             "Content-Type": "application/json",
             "User-Agent": "nightfall-python-sdk/1.0.0",
-            "x-api-key": self.key,  # v2
-            'Authorization': f'Bearer {self.key}',  # v3
+            'Authorization': f'Bearer {self.key}',
         }
         self.signing_secret = signing_secret
         self.logger = logging.getLogger(__name__)
-
-    # Text Scan V3
 
     def scan_text(self, texts: list[str], detection_rule_uuids: list[str] = None,
                   detection_rules: list[DetectionRule] = None):
@@ -135,7 +122,6 @@ class Nightfall:
 
         :param location: location of file to scan.
         :param webhook_url: webhook endpoint which will receive the results of the scan.
-        :type text: str
         :param policy_uuid: policy UUID.
         :type policy_uuid: str or None
         :param detection_rule_uuids: list of detection rule UUIDs.
