@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import List
+from typing import List, Optional
 
 from nightfall.exceptions import NightfallUserError
 
@@ -81,8 +81,8 @@ class ExclusionRule:
         word_list (WordList or None): The list of words to compare to a candidate finding.
     """
     match_type: MatchType
-    regex: Regex = None
-    word_list: WordList = None
+    regex: Optional[Regex] = None
+    word_list: Optional[WordList] = None
 
     def __post_init__(self):
         if (not self.regex and not self.word_list) or (self.regex and self.word_list):
@@ -137,15 +137,15 @@ class RedactionConfig:
     Attributes:
         remove_finding (bool): Whether the original finding should be omitted in responses from the API.
         mask_config (MaskConfig): Build a redaction config with masking.
-        substitution_phrase (str or None): Build a redaction config with info type substitution.
+        substitution_phrase (str or None): Build a redaction config with a substitution phrase.
         infotype_substitution (bool or None): Build a redaction config with info type substitution.
         public_key (str or None): Build a redaction config with RSA encryption.
     """
     remove_finding: bool
-    mask_config: MaskConfig = None
-    substitution_phrase: str = None
+    mask_config: Optional[MaskConfig] = None
+    substitution_phrase: Optional[str] = None
     infotype_substitution: bool = False
-    public_key: str = None
+    public_key: Optional[str] = None
 
     def __post_init__(self):
         config_counts = [self.mask_config, self.substitution_phrase, self.public_key].count(None)
@@ -187,14 +187,14 @@ class Detector:
     """
     min_confidence: Confidence
     min_num_findings: int = 1
-    nightfall_detector: str = None
-    regex: Regex = None
-    word_list: WordList = None
-    uuid: str = None
-    display_name: str = None
-    context_rules: List[ContextRule] = None
-    exclusion_rules: List[ExclusionRule] = None
-    redaction_config: RedactionConfig = None
+    nightfall_detector: Optional[str] = None
+    regex: Optional[Regex] = None
+    word_list: Optional[WordList] = None
+    uuid: Optional[str] = None
+    display_name: Optional[str] = None
+    context_rules: Optional[List[ContextRule]] = None
+    exclusion_rules: Optional[List[ExclusionRule]] = None
+    redaction_config: Optional[RedactionConfig] = None
 
     def __post_init__(self):
         if [self.nightfall_detector, self.regex, self.word_list, self.uuid].count(None) != 3:

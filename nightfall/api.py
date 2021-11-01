@@ -10,7 +10,7 @@ import hashlib
 import json
 import logging
 import os
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 import requests
 
@@ -27,7 +27,7 @@ class Nightfall:
     FILE_SCAN_COMPLETE_ENDPOINT = PLATFORM_URL + "/v3/upload/{0}/finish"
     FILE_SCAN_SCAN_ENDPOINT = PLATFORM_URL + "/v3/upload/{0}/scan"
 
-    def __init__(self, key: str = None, signing_secret: str = None):
+    def __init__(self, key: Optional[str] = None, signing_secret: Optional[str] = None):
         """Instantiate a new Nightfall object.
         :param key: Your Nightfall API key. If None it will be read from the environment variable NIGHTFALL_API_KEY.
         :type key: str or None
@@ -51,8 +51,8 @@ class Nightfall:
         self.signing_secret = signing_secret
         self.logger = logging.getLogger(__name__)
 
-    def scan_text(self, texts: List[str], detection_rules: List[DetectionRule] = None,
-                  detection_rule_uuids: List[str] = None) -> Tuple[List[List[Finding]], List[str]]:
+    def scan_text(self, texts: List[str], detection_rules: Optional[List[DetectionRule]] = None,
+                  detection_rule_uuids: Optional[List[str]] = None) -> Tuple[List[List[Finding]], List[str]]:
         """Scan text with Nightfall.
 
         This method takes the specified config and then makes
@@ -111,9 +111,9 @@ class Nightfall:
 
     # File Scan
 
-    def scan_file(self, location: str, webhook_url: str = None, policy_uuid: str = None,
-                  detection_rules: List[DetectionRule] = None, detection_rule_uuids: List[str] = None,
-                  ) -> Tuple[str, str]:
+    def scan_file(self, location: str, webhook_url: Optional[str] = None, policy_uuid: Optional[str] = None,
+                  detection_rules: Optional[List[DetectionRule]] = None,
+                  detection_rule_uuids: Optional[List[str]] = None) -> Tuple[str, str]:
         """Scan file with Nightfall.
         At least one of policy_uuid, detection_rule_uuids or detection_rules is required.
 
@@ -200,8 +200,9 @@ class Nightfall:
         )
         return response
 
-    def _file_scan_scan(self, session_id: str, detection_rules: List[DetectionRule] = None,
-                        detection_rule_uuids: List[str] = None, webhook_url: str = None, policy_uuid: str = None):
+    def _file_scan_scan(self, session_id: str, detection_rules: Optional[List[DetectionRule]] = None,
+                        detection_rule_uuids: Optional[List[str]] = None, webhook_url: Optional[str] = None,
+                        policy_uuid: Optional[str] = None) -> requests.Response:
         if policy_uuid:
             data = {"policyUUID": policy_uuid}
         else:
