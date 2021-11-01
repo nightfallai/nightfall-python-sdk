@@ -186,7 +186,7 @@ class Detector:
             This configuration is currently only supported for scanning plaintext, not for file scanning.
     """
     min_confidence: Confidence
-    min_num_findings: int
+    min_num_findings: int = 1
     nightfall_detector: str = None
     regex: Regex = None
     word_list: WordList = None

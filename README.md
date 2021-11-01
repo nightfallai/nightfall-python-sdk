@@ -7,7 +7,7 @@ This is a python SDK for working with the Nightfall API.
 
 ## Installation 
 
-This module requires Python 3.6 or higher.
+This module requires Python 3.7 or higher.
 
 ```
 pip install nightfall
@@ -15,19 +15,22 @@ pip install nightfall
 
 ## Quickstart 
 
-Make a new [API Token](https://app.nightfall.ai/api/) and [Detection Rule Set](https://app.nightfall.ai/detection-engine/detection-rules) in Nightfall and store the values as environment variables.
+Make a new [API Token](https://app.nightfall.ai/api/) in Nightfall and store the value as an environment variable.
 
-```
-from nightfall import Nightfall
+```python
+import os
 
-nightfall = Nightfall(
-    os.getenv('NIGHTFALL_TOKEN'),
-    os.getenv('NIGHTFALL_CONDITION_SET')
-    )
+from nightfall.api import Nightfall
+from nightfall.detection_rules import Confidence, DetectionRule, Detector
 
-response = nightfall.scan({'id': 'test string'})
+nightfall = Nightfall(os.getenv('NIGHTFALL_API_KEY'))
 
-print(response)
+findings, _ = nightfall.scan_text(
+        ["4916-6734-7572-5015 is my credit card number"],
+        [DetectionRule(
+            [Detector(min_confidence=Confidence.LIKELY,
+                     nightfall_detector="CREDIT_CARD_NUMBER")])])
+print(findings)
 ```
 
 For more information on the details of this library, please refer to 
@@ -50,7 +53,7 @@ environment with the following commands:
 
 ### Run Unit Tests
 
-Unit and Integration tests can be found in the `tests/` directory. You can run them with `make test`. Be sure to have `NIGHTFALL_TOKEN` and `NIGHTFALL_CONDITION_SET` set as environment variables before running the tests.
+Unit and Integration tests can be found in the `tests/` directory. You can run them with `pytest`. Be sure to have `NIGHTFALL_API_KEY` set as an environment variable before running the tests.
 
 ### View Code Coverage
 
