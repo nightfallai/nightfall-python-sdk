@@ -2,7 +2,8 @@ import os
 import pytest
 
 from nightfall.api import Nightfall
-from nightfall.detection_rules import DetectionRule, Detector, LogicalOp, Confidence
+from nightfall.detection_rules import DetectionRule, Detector, LogicalOp, Confidence, ExclusionRule
+from nightfall.findings import Finding, Range
 
 
 @pytest.fixture
@@ -19,6 +20,14 @@ def test_scan_text_detection_rules_v3(nightfall):
     )
 
     assert len(result) == 1
+    assert result[0][0] == Finding(
+        "4916-6734-7572-5015",
+        None, None, None,
+        "Credit Card Number",
+        result[0][0].detector_uuid,
+        Confidence.VERY_LIKELY,
+        Range(0, 19), Range(0, 19),
+        [], ["Inline Detection Rule #1"])
 
 
 @pytest.mark.filetest
