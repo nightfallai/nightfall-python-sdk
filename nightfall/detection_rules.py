@@ -299,4 +299,3 @@ class DetectionRule:
 
     def as_dict(self):
         return {"detectors": [d.as_dict() for d in self.detectors], "logicalOp": self.logical_op.value}
-
