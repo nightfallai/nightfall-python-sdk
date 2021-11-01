@@ -1,3 +1,5 @@
+from typing import List
+
 from nightfall.detection_rules import Confidence
 
 
@@ -26,8 +28,8 @@ class Finding:
                  confidence: Confidence,
                  byte_range: Range,
                  codepoint_range: Range,
-                 matched_detection_rule_uuids: list[str],
-                 matched_detection_rules: list[str]):
+                 matched_detection_rule_uuids: List[str],
+                 matched_detection_rules: List[str]):
         """Instantiate a Finding object.
         :param finding: The data that triggered a detector match.
 
@@ -51,10 +53,10 @@ class Finding:
         :type codepoint_range: Range
         :param matched_detection_rule_uuids: The list of detection rule UUIDs that contained a detector that triggered a
             match.
-        :type matched_detection_rule_uuids: list[str]
+        :type matched_detection_rule_uuids: List[str]
         :param matched_detection_rules: The list of inline detection rules that contained a detector that triggered a
             match.
-        :type matched_detection_rules: list[str]
+        :type matched_detection_rules: List[str]
         """
         self.finding = finding
         self.redacted_finding = redacted_finding

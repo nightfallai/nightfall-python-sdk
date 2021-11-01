@@ -31,4 +31,4 @@ jobs:
           NIGHTFALL_API_KEY: ${{ secrets.NIGHTFALL_API_KEY }}
           WEBHOOK_ENDPOINT: ${{ secrets.WEBHOOK_ENDPOINT }}
         run: |
-          pytest --cov=nightfall --cov-report term-missing tests
+          pytest -m "not filetest" --cov=nightfall --cov-report term-missing tests

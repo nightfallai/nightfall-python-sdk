@@ -21,6 +21,7 @@ def test_scan_text_detection_rules_v3(nightfall):
     assert len(result) == 1
 
 
+@pytest.mark.filetest
 def test_scan_file_detection_rules(nightfall):
     file = "file.txt"
 

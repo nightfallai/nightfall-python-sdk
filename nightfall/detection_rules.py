@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import List
 
 from nightfall.exceptions import NightfallUserError
 
@@ -21,10 +22,10 @@ class Regex:
 
 class WordList:
     """A list of words that can be used to customize the behavior of a detector while Nightfall performs a scan."""
-    def __init__(self, word_list: list[str], is_case_sensitive: bool):
+    def __init__(self, word_list: List[str], is_case_sensitive: bool):
         """Instantiate a WordList object
         :param word_list: The list of words to use.
-        :type word_list: list[str]
+        :type word_list: List[str]
         :param is_case_sensitive: Whether to make matches have the same case as each word given
         :type is_case_sensitive: bool
         """
@@ -106,7 +107,7 @@ class ExclusionRule:
 class MaskConfig:
     """An object that specifies how findings should be masked when returned by the API."""
     def __init__(self, masking_char: chr, num_chars_to_leave_unmasked: int = 0,
-                 mask_right_to_left: bool = False, chars_to_ignore: list[chr] = []):
+                 mask_right_to_left: bool = False, chars_to_ignore: List[chr] = []):
         """Instantiate a MaskConfig object
         :param masking_char: character that will be repeated to replace the finding.
             This character may be a multi-byte character, but it must be exactly one codepoint.
@@ -118,7 +119,7 @@ class MaskConfig:
         :type mask_right_to_left: bool
         :param chars_to_ignore: the set of characters to leave unmasked when the finding is returned. These characters
             may be multi-byte characters, but each entry in the array must be exactly one codepoint.
-        :type chars_to_ignore: list[chr]
+        :type chars_to_ignore: List[chr]
         """
         self.masking_char = masking_char
         self.num_chars_to_leave_unmasked = num_chars_to_leave_unmasked
@@ -204,8 +205,8 @@ class Detector:
             word_list: WordList = None,
             uuid: str = None,
             display_name: str = None,
-            context_rules: list[ContextRule] = None,
-            exclusion_rules: list[ExclusionRule] = None,
+            context_rules: List[ContextRule] = None,
+            exclusion_rules: List[ExclusionRule] = None,
             redaction_config: RedactionConfig = None
     ):
         """Instantiate a Detector object.
@@ -226,9 +227,9 @@ class Detector:
         :param display_name: A display name for this detector.
         :type display_name: str or None
         :param context_rules: The context rules to use to customize the behavior of this detector.
-        :type context_rules: list[ContextRule] or None
+        :type context_rules: List[ContextRule] or None
         :param exclusion_rules: The exclusion rules to use to customize the behavior of this detector.
-        :type exclusion_rules: list[ExclusionRule] or None
+        :type exclusion_rules: List[ExclusionRule] or None
         :param redaction_config: Sets the redaction configuration to-be-applied to this detector. This configuration is
             currently only supported for scanning plaintext, not for file scanning.
         :type redaction_config: RedactionConfig or None
@@ -284,10 +285,10 @@ class LogicalOp(Enum):
 
 class DetectionRule:
     """An object that contains a set of detectors to be used when scanning content."""
-    def __init__(self, detectors: list[Detector], logical_op: LogicalOp = LogicalOp.ANY):
+    def __init__(self, detectors: List[Detector], logical_op: LogicalOp = LogicalOp.ANY):
         """Instantiate a DetectionRule
         :param detectors: A list of Detectors to scan content with.
-        :type detectors: list[Detector]
+        :type detectors: List[Detector]
         :param logical_op: The method for combining the detectors. One of:
           - LogicalOp.ANY (logical or, i.e. a finding is emitted only if any of the provided detectors match)
           - LogicalOp.ALL (logical and, i.e. a finding is emitted only if all provided detectors match)

@@ -10,6 +10,8 @@ import hashlib
 import json
 import logging
 import os
+from typing import List
+
 import requests
 
 from nightfall.detection_rules import DetectionRule
@@ -48,8 +50,8 @@ class Nightfall:
         self.signing_secret = signing_secret
         self.logger = logging.getLogger(__name__)
 
-    def scan_text(self, texts: list[str], detection_rule_uuids: list[str] = None,
-                  detection_rules: list[DetectionRule] = None) -> [list[list[Finding]], list[str]]:
+    def scan_text(self, texts: List[str], detection_rule_uuids: List[str] = None,
+                  detection_rules: List[DetectionRule] = None) -> [List[List[Finding]], List[str]]:
         """Scan text with Nightfall.
 
         This method takes the specified config and then makes
@@ -58,12 +60,12 @@ class Nightfall:
 
 
         :param texts: List of strings to scan.
-        :type texts: list[str]
+        :type texts: List[str]
         :param detection_rule_uuids: List of detection rule UUIDs to scan each text with.
             These can be created in the Nightfall UI.
-        :type detection_rule_uuids: list[str] or None
+        :type detection_rule_uuids: List[str] or None
         :param detection_rules: List of detection rules to scan each text with.
-        :type detection_rules: list[DetectionRule] or None
+        :type detection_rules: List[DetectionRule] or None
         :returns: list of findings, list of redacted input texts
         """
 
@@ -109,7 +111,7 @@ class Nightfall:
     # File Scan
 
     def scan_file(self, location: str, webhook_url: str, policy_uuid: str = None,
-                  detection_rule_uuids: list[str] = None, detection_rules: list[DetectionRule] = None,
+                  detection_rule_uuids: List[str] = None, detection_rules: List[DetectionRule] = None,
                   ) -> [str, str]:
         """Scan file with Nightfall.
         At least one of policy_uuid, detection_rule_uuids or detection_rules is required.
@@ -119,9 +121,9 @@ class Nightfall:
         :param policy_uuid: policy UUID.
         :type policy_uuid: str or None
         :param detection_rule_uuids: list of detection rule UUIDs.
-        :type detection_rule_uuids: list[str] or None
+        :type detection_rule_uuids: List[str] or None
         :param detection_rules: list of detection rules.
-        :type detection_rules: list[DetectionRule] or None
+        :type detection_rules: List[DetectionRule] or None
         :returns: (scan_id, message)
         """
 
@@ -198,7 +200,7 @@ class Nightfall:
         return response
 
     def _file_scan_scan(self, session_id: str, webhook_url: str, policy_uuid: str,
-                        detection_rule_uuids: str, detection_rules: list[DetectionRule]):
+                        detection_rule_uuids: str, detection_rules: List[DetectionRule]):
         if policy_uuid:
             data = {"policyUUID": policy_uuid}
         else:
