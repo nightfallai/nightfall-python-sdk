@@ -20,8 +20,7 @@ Make a new [API Token](https://app.nightfall.ai/api/) in Nightfall and store the
 ```python
 import os
 
-from nightfall.api import Nightfall
-from nightfall.detection_rules import Confidence, DetectionRule, Detector
+from nightfall import Confidence, DetectionRule, Detector, Nightfall
 
 nightfall = Nightfall(os.getenv('NIGHTFALL_API_KEY'))
 
