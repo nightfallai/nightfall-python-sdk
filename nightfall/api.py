@@ -111,7 +111,7 @@ class Nightfall:
 
     # File Scan
 
-    def scan_file(self, location: str, webhook_url: str, policy_uuid: str = None,
+    def scan_file(self, location: str, webhook_url: str = None, policy_uuid: str = None,
                   detection_rules: List[DetectionRule] = None, detection_rule_uuids: List[str] = None,
                   ) -> Tuple[str, str]:
         """Scan file with Nightfall.
@@ -200,8 +200,8 @@ class Nightfall:
         )
         return response
 
-    def _file_scan_scan(self, session_id: str, detection_rules: List[DetectionRule] = [],
-                        detection_rule_uuids: List[str] = [], webhook_url: str = "", policy_uuid: str = ""):
+    def _file_scan_scan(self, session_id: str, detection_rules: List[DetectionRule] = None,
+                        detection_rule_uuids: List[str] = None, webhook_url: str = None, policy_uuid: str = None):
         if policy_uuid:
             data = {"policyUUID": policy_uuid}
         else:
