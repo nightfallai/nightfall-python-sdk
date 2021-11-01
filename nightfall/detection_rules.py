@@ -243,9 +243,11 @@ class DetectionRule:
         logical_op (LogicalOp): The method for combining the detectors. One of:
           - LogicalOp.ANY (logical or, i.e. a finding is emitted only if any of the provided detectors match)
           - LogicalOp.ALL (logical and, i.e. a finding is emitted only if all provided detectors match)
+        name (str): The name of the detection rule.
     """
     detectors: List[Detector]
     logical_op: LogicalOp = LogicalOp.ANY
+    name: str = ""
 
     def as_dict(self):
         return {"detectors": [d.as_dict() for d in self.detectors], "logicalOp": self.logical_op.value}

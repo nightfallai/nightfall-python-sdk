@@ -144,10 +144,10 @@ class Nightfall:
         response = self._file_scan_finalize(session_id)
         _validate_response(response, 200)
 
-        response = self._file_scan_scan(session_id, webhook_url,
-                                        policy_uuid=policy_uuid,
+        response = self._file_scan_scan(session_id,
+                                        detection_rules=detection_rules,
                                         detection_rule_uuids=detection_rule_uuids,
-                                        detection_rules=detection_rules)
+                                        webhook_url=webhook_url, policy_uuid=policy_uuid)
         _validate_response(response, 200)
         parsed_response = response.json()
 
@@ -200,8 +200,8 @@ class Nightfall:
         )
         return response
 
-    def _file_scan_scan(self, session_id: str, webhook_url: str, policy_uuid: str,
-                        detection_rule_uuids: str, detection_rules: List[DetectionRule]):
+    def _file_scan_scan(self, session_id: str, detection_rules: List[DetectionRule] = [],
+                        detection_rule_uuids: List[str] = [], webhook_url: str = "", policy_uuid: str = ""):
         if policy_uuid:
             data = {"policyUUID": policy_uuid}
         else:
