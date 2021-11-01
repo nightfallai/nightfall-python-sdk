@@ -58,10 +58,6 @@ Unit and Integration tests can be found in the `tests/` directory. You can run t
 
 You can view the code coverage report by running `coverage html` and `python3 -m http.server --directory htmlcov` after running the unit tests.
 
-### SDK Documentation
-
-The SDK is documented using the Sphinx library. You can generatre the developer documentation using `make docs` and preview it on `localhost:8000` by running `make serve-docs`.
-
 ### Creating a Release 
 
 Releases are automatically published to PyPI using GitHub Actions. Creating a release in GitHub will trigger a new build that will publish the latest version of this library to [PyPI](https://pypi.org/project/nightfall/). 
@@ -69,8 +65,7 @@ Releases are automatically published to PyPI using GitHub Actions. Creating a re
 The steps to do this are: 
 
 1. Add what changed to the CHANGELOG file
-1. Update the version in `setup.py`
-1. Generate documentation with `make docs` to make sure it's up to date
+2. Update the version in `setup.py`
 3. Commit changes and push to the main branch. 
 4. Create a new release in the GitHub UI. 
 5. Observe the release action succeed and see the latest version of this library on PyPI. 
