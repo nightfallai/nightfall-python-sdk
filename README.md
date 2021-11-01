@@ -33,7 +33,7 @@ print(findings)
 ```
 
 For more information on the details of this library, please refer to 
-the [SDK Documentation](https://nightfallai.github.io/nightfall-python-sdk/).
+the [API Documentation](https://docs.nightfall.ai/).
 ## Contributing
 
 Please create an issue with a description of your problem, or open a pull request with the fix. 
