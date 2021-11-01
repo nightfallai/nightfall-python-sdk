@@ -98,11 +98,9 @@ class Nightfall:
             data=json.dumps(data)
         )
 
-        # Logs for Debugging
         self.logger.debug(f"HTTP Request URL: {response.request.url}")
         self.logger.debug(f"HTTP Request Body: {response.request.body}")
         self.logger.debug(f"HTTP Request Headers: {response.request.headers}")
-
         self.logger.debug(f"HTTP Status Code: {response.status_code}")
         self.logger.debug(f"HTTP Response Headers: {response.headers}")
         self.logger.debug(f"HTTP Response Text: {response.text}")
