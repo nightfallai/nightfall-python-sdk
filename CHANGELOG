@@ -3,6 +3,19 @@ Changelog
 
 Here you can see the full list of changes between each Nightfall release.
 
+Version 1.0.0
+-------------
+
+Released on November 1, 2021
+
+- Revised to use Nightfall v3 API.
+- Add in file scanning functionality.
+
+.. warning::
+    This is a breaking change compared to all versions before it, using
+    Nightfall's new APIs and adding in file scanning. Please check the
+    new methods provided to migrate from the older API.
+
 Version 0.6.0
 -------------
 
