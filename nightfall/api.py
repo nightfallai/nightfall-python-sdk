@@ -39,7 +39,7 @@ class Nightfall:
         else:
             self.key = os.getenv("NIGHTFALL_API_KEY")
 
-        if not key:
+        if not self.key:
             raise NightfallUserError("need an API key either in constructor or in NIGHTFALL_API_KEY environment var",
                                      40001)
 
