@@ -1,23 +1,16 @@
-"""
-nightfall.exceptions
-~~~~~~~~~~~~~~~~~~~~
+class NightfallError(Exception):
+    def __init__(self, message, error_code):
+        super().__init__(message)
+        self.message = message
+        self.error_code = error_code
 
-    This module provides some classes that subclass Exception to provide
-    some useful exceptions for the API wrapper.
-"""
+    def __str__(self):
+        return f"{str(self.error_code)}: {self.message}"
 
 
-class Error(Exception):
-    """Base class for exceptions in this module."""
+class NightfallUserError(NightfallError):
     pass
 
 
-class InputError(Error):
-    """Exception raised for errors in the input.
-
-    :param id: input id in which the error occurred
-    :param message: explanation of the error
-    """
-    def __init__(self, id, message):
-        self.id = id
-        self.message = message
+class NightfallSystemError(NightfallError):
+    pass

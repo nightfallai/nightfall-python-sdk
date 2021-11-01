@@ -1,12 +1,4 @@
-"""
-:copyright: (c) 2021 by Nightfall
-:license: MIT, see LICENSE for more details.
-"""
-import os
-import sys
-
-from setuptools import setup
-from setuptools.command.install import install
+from setuptools import setup, find_packages
 
 
 def readme():
@@ -14,9 +6,10 @@ def readme():
     with open('README.md') as f:
         return f.read()
 
+
 setup(
     name="nightfall",
-    version="0.6.0",
+    version="1.0.0",
     description="Python SDK for Nightfall",
     long_description=readme(),
     long_description_content_type="text/markdown",
@@ -36,7 +29,7 @@ setup(
         "Programming Language :: Python :: 3 :: Only",
     ],
     keywords='nightfall dlp api sdk',
-    packages=['nightfall'],
+    packages=find_packages(exclude=['tests*']),
     install_requires=[
         'requests',
     ],

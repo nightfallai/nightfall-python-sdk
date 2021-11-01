@@ -10,3 +10,6 @@ sphinx_rtd_theme
 build
 flake8
 autopep8
+pytest
+pytest-cov
+requests

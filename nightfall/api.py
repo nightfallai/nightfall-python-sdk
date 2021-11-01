@@ -1,153 +1,259 @@
+
 """
 nightfall.api
 ~~~~~~~~~~~~~
-
     This module provides a class which abstracts the Nightfall REST API.
 """
+from datetime import datetime, timedelta
+import hmac
+import hashlib
 import json
-import requests
 import logging
+import os
+from typing import List, Tuple, Optional
 
-from nightfall.exceptions import InputError
+import requests
+
+from nightfall.detection_rules import DetectionRule
+from nightfall.exceptions import NightfallUserError, NightfallSystemError
+from nightfall.findings import Finding
 
 
-class Nightfall():
-    """A python interface for the Nightfall API.
+class Nightfall:
+    PLATFORM_URL = "https://api.nightfall.ai"
+    TEXT_SCAN_ENDPOINT_V3 = PLATFORM_URL + "/v3/scan"
+    FILE_SCAN_INITIALIZE_ENDPOINT = PLATFORM_URL + "/v3/upload"
+    FILE_SCAN_UPLOAD_ENDPOINT = PLATFORM_URL + "/v3/upload/{0}"
+    FILE_SCAN_COMPLETE_ENDPOINT = PLATFORM_URL + "/v3/upload/{0}/finish"
+    FILE_SCAN_SCAN_ENDPOINT = PLATFORM_URL + "/v3/upload/{0}/scan"
 
-    .. data:: MAX_PAYLOAD_SIZE
-
-        Maximum payload size in bytes that the Nightfall API will accept
-
-    .. data:: MAX_NUM_ITEMS
-
-        Maximum number of items that the Nightfall API will accept
-    """
-    MAX_PAYLOAD_SIZE = 500_000
-    MAX_NUM_ITEMS = 50_000
-
-    def __init__(self, token, condition_set):
+    def __init__(self, key: Optional[str] = None, signing_secret: Optional[str] = None):
         """Instantiate a new Nightfall object.
-
-        :param token: Your Nightfall API token.
-        :param condition_set: Your Nightfall Condition Set UUID
+        :param key: Your Nightfall API key. If None it will be read from the environment variable NIGHTFALL_API_KEY.
+        :type key: str or None
+        :param signing_secret: Your Nightfall signing secret used for webhook validation.
+        :type signing_secret: str or None
         """
-        self.token = token
-        self.condition_set = condition_set
-        self._url = 'https://api.nightfall.ai/v2/scan'
+        if key:
+            self.key = key
+        else:
+            self.key = os.getenv("NIGHTFALL_API_KEY")
+
+        if not self.key:
+            raise NightfallUserError("need an API key either in constructor or in NIGHTFALL_API_KEY environment var",
+                                     40001)
+
         self._headers = {
-            'Content-Type': 'application/json',
-            'x-api-key': self.token
+            "Content-Type": "application/json",
+            "User-Agent": "nightfall-python-sdk/1.0.0",
+            'Authorization': f'Bearer {self.key}',
         }
+        self.signing_secret = signing_secret
         self.logger = logging.getLogger(__name__)
 
-    def make_payloads(self, data):
-        """Turn a dict into a list of acceptable payloads.
+    def scan_text(self, texts: List[str], detection_rules: Optional[List[DetectionRule]] = None,
+                  detection_rule_uuids: Optional[List[str]] = None) -> Tuple[List[List[Finding]], List[str]]:
+        """Scan text with Nightfall.
 
-        Creates chunks based on the ``MAX_PAYLOAD_SIZE`` and ``MAX_NUM_ITEMS``
-        constants.
+        This method takes the specified config and then makes
+        one or more requests to the Nightfall API for scanning.
+        At least one of detection_rule_uuids or detection_rules is required.
 
-        When the number of items in a dict is greater than ``MAX_NUM_ITEMS``
-        or total sum of all strings in a dict is greater than 
-        ``MAX_PAYLOAD_SIZE``, we will split that dict into multiple dicts.
 
-        :param data: dict in form of ``{'id': 'string',}``
-        :type data: list
-
-        :raises InputError: when individual dictionary item is larger than
-            ``MAX_PAYLOAD_SIZE``
-
-        :returns: list of dicts to scan
+        :param texts: List of strings to scan.
+        :type texts: List[str]
+        :param detection_rules: List of detection rules to scan each text with.
+        :type detection_rules: List[DetectionRule] or None
+        :param detection_rule_uuids: List of detection rule UUIDs to scan each text with.
+            These can be created in the Nightfall UI.
+        :type detection_rule_uuids: List[str] or None
+        :returns: list of findings, list of redacted input texts
         """
-        cur_chunk_bytes = 0
-        cur_chunk = {}
-        chunks = []
 
-        for k, v in data.items():
-            if cur_chunk_bytes + len(v) >= self.MAX_PAYLOAD_SIZE or \
-                    len(cur_chunk) >= self.MAX_NUM_ITEMS:
-                if cur_chunk:
-                    chunks.append(cur_chunk)
-                    cur_chunk = {}
-                cur_chunk_bytes = len(v)
-                if len(v) <= self.MAX_PAYLOAD_SIZE:
-                    cur_chunk[k] = v
-                else:
-                    err_msg = f"Unable to scan string with id: '{k}'; " \
-                                f"larger than {self.MAX_PAYLOAD_SIZE} bytes."
-                    raise InputError(k, err_msg)
-            else:
-                cur_chunk[k] = v
-                cur_chunk_bytes += len(v)
-        if cur_chunk:
-            chunks.append(cur_chunk)
+        if not detection_rule_uuids and not detection_rules:
+            raise NightfallUserError("at least one of detection_rule_uuids or detection_rules required", 40001)
 
-        return chunks
+        config = {}
+        if detection_rule_uuids:
+            config["detectionRuleUUIDs"] = detection_rule_uuids
+        if detection_rules:
+            config["detectionRules"] = [d.as_dict() for d in detection_rules]
+        request_body = {
+            "payload": texts,
+            "config": config
+        }
+        response = self._scan_text_v3(request_body)
 
-    def scan(self, data):
-        """Scan data with Nightfall.
+        _validate_response(response, 200)
 
-        This method will convert a dict into chunks if necessary
-        and then makes one or more requests to the Nightfall API to scan the
-        data.
+        parsed_response = response.json()
 
-        data dicts should be in the following format:
+        findings = [[Finding.from_dict(f) for f in item_findings] for item_findings in parsed_response["findings"]]
+        return findings, parsed_response.get("redactedPayload")
 
-        ::
+    def _scan_text_v3(self, data: dict):
+        response = requests.post(
+            url=self.TEXT_SCAN_ENDPOINT_V3,
+            headers=self._headers,
+            data=json.dumps(data)
+        )
 
-            {
-                "id123": "string_to_scan",
-            }
+        self.logger.debug(f"HTTP Request URL: {response.request.url}")
+        self.logger.debug(f"HTTP Request Body: {response.request.body}")
+        self.logger.debug(f"HTTP Request Headers: {response.request.headers}")
+        self.logger.debug(f"HTTP Status Code: {response.status_code}")
+        self.logger.debug(f"HTTP Response Headers: {response.headers}")
+        self.logger.debug(f"HTTP Response Text: {response.text}")
 
-        Where the key is a reference to where the string came from, and the
-        value is the string that you wish to scan. The keys is not scanned
-        and is not considered sensitive.
+        return response
 
-        response dicts are in the form of:
+    # File Scan
 
-        ::
+    def scan_file(self, location: str, webhook_url: Optional[str] = None, policy_uuid: Optional[str] = None,
+                  detection_rules: Optional[List[DetectionRule]] = None,
+                  detection_rule_uuids: Optional[List[str]] = None) -> Tuple[str, str]:
+        """Scan file with Nightfall.
+        At least one of policy_uuid, detection_rule_uuids or detection_rules is required.
 
-            {
-                "id123": [{nightfall_findings},] or None,
-            }
-            
-        :param data: dict to scan.
-        :type data: dict
-        :returns: dict with findings.
+        :param location: location of file to scan.
+        :param webhook_url: webhook endpoint which will receive the results of the scan.
+        :param policy_uuid: policy UUID.
+        :type policy_uuid: str or None
+        :param detection_rules: list of detection rules.
+        :type detection_rules: List[DetectionRule] or None
+        :param detection_rule_uuids: list of detection rule UUIDs.
+        :type detection_rule_uuids: List[str] or None
+        :returns: (scan_id, message)
         """
-        all_findings = {}
-        chunks = self.make_payloads(data)
 
-        for chunk in chunks:
-            data = {
-                'payload': list(chunk.values()),
-                'config': {
-                    'conditionSetUUID': self.condition_set
-                }
-            }
+        if not policy_uuid and not detection_rule_uuids and not detection_rules:
+            raise NightfallUserError("at least one of policy_uuid, detection_rule_uuids or detection_rules required",
+                                     40001)
 
-            response = requests.post(
-                url=self._url,
-                headers=self._headers,
-                data=json.dumps(data)
+        response = self._file_scan_initialize(location)
+        _validate_response(response, 200)
+        result = response.json()
+        session_id, chunk_size = result['id'], result['chunkSize']
+
+        uploaded = self._file_scan_upload(session_id, location, chunk_size)
+        if not uploaded:
+            raise NightfallSystemError("File upload failed", 50000)
+
+        response = self._file_scan_finalize(session_id)
+        _validate_response(response, 200)
+
+        response = self._file_scan_scan(session_id,
+                                        detection_rules=detection_rules,
+                                        detection_rule_uuids=detection_rule_uuids,
+                                        webhook_url=webhook_url, policy_uuid=policy_uuid)
+        _validate_response(response, 200)
+        parsed_response = response.json()
+
+        return parsed_response["id"], parsed_response["message"]
+
+    def _file_scan_initialize(self, location: str):
+        data = {
+            "fileSizeBytes": os.path.getsize(location)
+        }
+        response = requests.post(
+            url=self.FILE_SCAN_INITIALIZE_ENDPOINT,
+            headers=self._headers,
+            data=json.dumps(data)
+        )
+
+        return response
+
+    def _file_scan_upload(self, session_id: str, location: str, chunk_size: int):
+
+        def read_chunks(fp, chunk_size):
+            ix = 0
+            while True:
+                data = fp.read(chunk_size)
+                if not data:
+                    break
+                yield ix, data
+                ix = ix + 1
+
+        def upload_chunk(id, data, headers):
+            response = requests.patch(
+                url=self.FILE_SCAN_UPLOAD_ENDPOINT.format(id),
+                data=data,
+                headers=headers
             )
+            return response
 
-            # Logs for Debugging
-            self.logger.debug(f"HTTP Request URL: {response.request.url}")
-            self.logger.debug(f"HTTP Request Body: {response.request.body}")
-            self.logger.debug(
-                f"HTTP Request Headers: {response.request.headers}")
+        with open(location) as fp:
+            for ix, piece in read_chunks(fp, chunk_size):
+                headers = self._headers
+                headers["X-UPLOAD-OFFSET"] = str(ix * chunk_size)
+                response = upload_chunk(session_id, piece, headers)
+                _validate_response(response, 204)
 
-            self.logger.debug(f"HTTP Status Code: {response.status_code}")
-            self.logger.debug(f"HTTP Response Headers: {response.headers}")
-            self.logger.debug(f"HTTP Response Text: {response.text}")
+        return True
 
-            response.raise_for_status()
-            findings = response.json()
+    def _file_scan_finalize(self, session_id: str):
+        response = requests.post(
+            url=self.FILE_SCAN_COMPLETE_ENDPOINT.format(session_id),
+            headers=self._headers
+        )
+        return response
 
-            for idx, d in enumerate(chunk):
-                if findings[idx] is not None:
-                    all_findings[d] = findings[idx]
-                else:
-                    all_findings[d] = None
+    def _file_scan_scan(self, session_id: str, detection_rules: Optional[List[DetectionRule]] = None,
+                        detection_rule_uuids: Optional[List[str]] = None, webhook_url: Optional[str] = None,
+                        policy_uuid: Optional[str] = None) -> requests.Response:
+        if policy_uuid:
+            data = {"policyUUID": policy_uuid}
+        else:
+            data = {"policy": {"webhookURL": webhook_url}}
+            if detection_rule_uuids:
+                data["policy"]["detectionRuleUUIDs"] = detection_rule_uuids
+            if detection_rules:
+                data["policy"]["detectionRules"] = [d.as_dict() for d in detection_rules]
 
-        return all_findings
+        response = requests.post(
+            url=self.FILE_SCAN_SCAN_ENDPOINT.format(session_id),
+            headers=self._headers,
+            data=json.dumps(data)
+        )
+        return response
+
+    def validate_webhook(self, request_signature: str, request_timestamp: str, request_data: str) -> bool:
+        """
+        Validate the integrity of webhook requests coming from Nightfall.
+
+        :param request_signature: value of X-Nightfall-Signature header
+        :type request_signature: str
+        :param request_timestamp: value of X-Nightfall-Timestamp header
+        :type request_timestamp: str
+        :param request_data: request body as a unicode string
+            Flask: request.get_data(as_text=True)
+            Django: request.body.decode("utf-8")
+        :type request_data: str
+        :returns: validation status boolean
+        """
+
+        now = datetime.now()
+        if now-timedelta(minutes=5) <= datetime.fromtimestamp(int(request_timestamp)) <= now:
+            raise NightfallUserError("could not validate timestamp is within the last few minutes", 40000)
+        computed_signature = hmac.new(
+            self.signing_secret.encode(),
+            msg=F"{request_timestamp}:{request_data}".encode(),
+            digestmod=hashlib.sha256
+        ).hexdigest().lower()
+        if computed_signature != request_signature:
+            raise NightfallUserError("could not validate signature of inbound request!", 40000)
+        return True
+
+
+# Utility
+def _validate_response(response: requests.Response, expected_status_code: int):
+    if response.status_code == expected_status_code:
+        return
+    response_json = response.json()
+    error_code = response_json.get('code', None)
+    if error_code is None:
+        raise NightfallSystemError(response.text, 50000)
+    if error_code < 40000 or error_code >= 50000:
+        raise NightfallSystemError(response.text, error_code)
+    else:
+        raise NightfallUserError(response.text, error_code)
