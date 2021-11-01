@@ -253,10 +253,9 @@ def _validate_response(response: requests.Response, expected_status_code: int):
         return
     response_json = response.json()
     error_code = response_json.get('code', None)
-    if error_code is not None:
-        if error_code < 40000 or error_code >= 50000:
-            raise NightfallSystemError(response.text, error_code)
-        else:
-            raise NightfallUserError(response.text, error_code)
-    else:
+    if error_code is None:
         raise NightfallSystemError(response.text, 50000)
+    if error_code < 40000 or error_code >= 50000:
+        raise NightfallSystemError(response.text, error_code)
+    else:
+        raise NightfallUserError(response.text, error_code)
