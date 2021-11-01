@@ -40,7 +40,8 @@ class Nightfall:
             self.key = os.getenv("NIGHTFALL_API_KEY")
 
         if not key:
-            raise NightfallUserError("need an API key either in constructor or in NIGHTFALL_API_KEY environment var")
+            raise NightfallUserError("need an API key either in constructor or in NIGHTFALL_API_KEY environment var",
+                                     40001)
 
         self._headers = {
             "Content-Type": "application/json",
