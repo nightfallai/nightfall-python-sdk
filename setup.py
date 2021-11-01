@@ -9,7 +9,7 @@ def readme():
 
 setup(
     name="nightfall",
-    version="1.0.0",
+    version="1.0.1",
     description="Python SDK for Nightfall",
     long_description=readme(),
     long_description_content_type="text/markdown",
