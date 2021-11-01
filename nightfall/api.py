@@ -10,7 +10,7 @@ import hashlib
 import json
 import logging
 import os
-from typing import List
+from typing import List, Tuple
 
 import requests
 
@@ -52,7 +52,7 @@ class Nightfall:
         self.logger = logging.getLogger(__name__)
 
     def scan_text(self, texts: List[str], detection_rules: List[DetectionRule] = None,
-                  detection_rule_uuids: List[str] = None) -> [List[List[Finding]], List[str]]:
+                  detection_rule_uuids: List[str] = None) -> Tuple[List[List[Finding]], List[str]]:
         """Scan text with Nightfall.
 
         This method takes the specified config and then makes
@@ -91,7 +91,7 @@ class Nightfall:
         findings = [[Finding.from_dict(f) for f in item_findings] for item_findings in parsed_response["findings"]]
         return findings, parsed_response.get("redactedPayload")
 
-    def _scan_text_v3(self, data):
+    def _scan_text_v3(self, data: dict):
         response = requests.post(
             url=self.TEXT_SCAN_ENDPOINT_V3,
             headers=self._headers,
@@ -113,7 +113,7 @@ class Nightfall:
 
     def scan_file(self, location: str, webhook_url: str, policy_uuid: str = None,
                   detection_rules: List[DetectionRule] = None, detection_rule_uuids: List[str] = None,
-                  ) -> [str, str]:
+                  ) -> Tuple[str, str]:
         """Scan file with Nightfall.
         At least one of policy_uuid, detection_rule_uuids or detection_rules is required.
 
@@ -165,7 +165,7 @@ class Nightfall:
 
         return response
 
-    def _file_scan_upload(self, session_id, location: str, chunk_size: int):
+    def _file_scan_upload(self, session_id: str, location: str, chunk_size: int):
 
         def read_chunks(fp, chunk_size):
             ix = 0
@@ -193,7 +193,7 @@ class Nightfall:
 
         return True
 
-    def _file_scan_finalize(self, session_id):
+    def _file_scan_finalize(self, session_id: str):
         response = requests.post(
             url=self.FILE_SCAN_COMPLETE_ENDPOINT.format(session_id),
             headers=self._headers
@@ -201,7 +201,7 @@ class Nightfall:
         return response
 
     def _file_scan_scan(self, session_id: str, webhook_url: str, policy_uuid: str,
-                        detection_rule_uuids: str, detection_rules: List[DetectionRule]):
+                        detection_rule_uuids: List[str], detection_rules: List[DetectionRule]):
         if policy_uuid:
             data = {"policyUUID": policy_uuid}
         else:
