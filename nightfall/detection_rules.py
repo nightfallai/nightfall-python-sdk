@@ -30,7 +30,7 @@ class WordList:
     is_case_sensitive: bool
 
     def as_dict(self):
-        return {"wordList": self.word_list, "isCaseSensitive": self.is_case_sensitive}
+        return {"values": self.word_list, "isCaseSensitive": self.is_case_sensitive}
 
 
 class Confidence(Enum):
@@ -60,7 +60,7 @@ class ContextRule:
 
     def as_dict(self):
         return {
-            "regex": self.regex,
+            "regex": self.regex.as_dict(),
             "proximity": {"windowBefore": self.window_before, "windowAfter": self.window_after},
             "confidenceAdjustment": {"fixedConfidence": self.fixed_confidence.value}
         }
@@ -92,8 +92,10 @@ class ExclusionRule:
         result = {"matchType": self.match_type.value}
         if self.regex:
             result["regex"] = self.regex.as_dict()
+            result["exclusionType"] = "REGEX"
         if self.word_list:
             result["wordList"] = self.word_list.as_dict()
+            result["exclusionType"] = "WORD_LIST"
         return result
 
 
