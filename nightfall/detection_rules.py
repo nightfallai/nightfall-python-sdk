@@ -247,7 +247,10 @@ class DetectionRule:
     """
     detectors: List[Detector]
     logical_op: LogicalOp = LogicalOp.ANY
-    name: str = ""
+    name: Optional[str] = None
 
     def as_dict(self):
-        return {"detectors": [d.as_dict() for d in self.detectors], "logicalOp": self.logical_op.value}
+        result = {"detectors": [d.as_dict() for d in self.detectors], "logicalOp": self.logical_op.value}
+        if self.name:
+            result["name"] = self.name
+        return result
