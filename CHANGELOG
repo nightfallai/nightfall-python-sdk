@@ -3,6 +3,20 @@ Changelog
 
 Here you can see the full list of changes between each Nightfall release.
 
+Version 1.0.3
+-------------
+
+Released on November 2, 2021
+
+- Bugfix fix classifier on module.
+
+Version 1.0.2
+-------------
+
+Released on November 2, 2021
+
+- Bugfix to send detection rule name in request.
+
 Version 1.0.1
 -------------
 
