@@ -9,7 +9,7 @@ def readme():
 
 setup(
     name="nightfall",
-    version="1.0.1",
+    version="1.0.2",
     description="Python SDK for Nightfall",
     long_description=readme(),
     long_description_content_type="text/markdown",
@@ -18,7 +18,7 @@ setup(
     author_email="support@nightfall.ai",
     license="MIT",
     classifiers=[
-        "Development Status :: 4 - Beta",
+        "Development Status :: 5 - Stable",
         "Intended Audience :: Developers",
         "Intended Audience :: System Administrators",
         "License :: OSI Approved :: MIT License",
@@ -33,5 +33,5 @@ setup(
     install_requires=[
         'requests',
     ],
-    python_requires='>=3.6.*'
+    python_requires='>=3.7.*'
 )
