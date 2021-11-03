@@ -1,0 +1,13 @@
+version: 2
+updates:
+  # Enable version updates for Github Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    # Check for updates once daily
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "pip"
+    directory: "/"
+    # Check for updates once daily
+    schedule:
+      interval: "daily"
