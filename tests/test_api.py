@@ -29,15 +29,16 @@ def test_scan_text_detection_rules_v3(nightfall):
                      redaction_config=RedactionConfig(remove_finding=False,
                                                       mask_config=MaskConfig(masking_char='👀',
                                                                              num_chars_to_leave_unmasked=3,
-                                                                             chars_to_ignore=["-"]))
-                     )])]
+                                                                             chars_to_ignore=["-"])),
+                     )])],
+        context_bytes=10,
     )
 
     assert len(result) == 1
     assert result[0][0] == Finding(
         "4916-6734-7572-5015",
         '491👀-👀👀👀👀-👀👀👀👀-👀👀👀👀',
-        None, None,
+        None, " is my cre",
         "Credit Card Number",
         result[0][0].detector_uuid,
         Confidence.VERY_LIKELY,
