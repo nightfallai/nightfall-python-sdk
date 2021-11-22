@@ -1,4 +1,8 @@
+import datetime
 import os
+import time
+
+from freezegun import freeze_time
 import pytest
 
 from nightfall.api import Nightfall
@@ -45,6 +49,33 @@ def test_scan_text_detection_rules_v3(nightfall):
         [], ["Inline Detection Rule #1"])
     assert len(redactions) == 1
     assert redactions[0] == "491👀-👀👀👀👀-👀👀👀👀-👀👀👀👀 is my credit card number"
+
+
+@freeze_time("2021-10-04T17:30:50Z")
+def test_validate_webhook(nightfall):
+    nightfall.signing_secret = "super-secret-shhhh"
+    timestamp = 1633368645
+    body = "hello world foo bar goodnight moon"
+    expected = "1bb7619a9504474ffc14086d0423ad15db42606d3ca52afccb4a5b2125d7b703"
+    assert nightfall.validate_webhook(expected, timestamp, body)
+
+
+@freeze_time("2021-10-04T19:30:50Z")
+def test_validate_webhook_too_old(nightfall):
+    nightfall.signing_secret = "super-secret-shhhh"
+    timestamp = 1633368645
+    body = "hello world foo bar goodnight moon"
+    expected = "1bb7619a9504474ffc14086d0423ad15db42606d3ca52afccb4a5b2125d7b703"
+    assert not nightfall.validate_webhook(expected, timestamp, body)
+
+
+@freeze_time("2021-10-04T17:30:50Z")
+def test_validate_webhook_incorrect_sig(nightfall):
+    nightfall.signing_secret = "super-secret-shhhh"
+    timestamp = 1633368645
+    body = "hello world foo bar goodnight moon"
+    expected = "not matching"
+    assert not nightfall.validate_webhook(expected, timestamp, body)
 
 
 @pytest.mark.filetest
