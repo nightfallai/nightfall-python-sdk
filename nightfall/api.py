@@ -52,7 +52,8 @@ class Nightfall:
         self.logger = logging.getLogger(__name__)
 
     def scan_text(self, texts: List[str], detection_rules: Optional[List[DetectionRule]] = None,
-                  detection_rule_uuids: Optional[List[str]] = None, context_bytes = None) -> Tuple[List[List[Finding]], List[str]]:
+                  detection_rule_uuids: Optional[List[str]] = None, context_bytes: Optional[int] = None) ->\
+            Tuple[List[List[Finding]], List[str]]:
         """Scan text with Nightfall.
 
         This method takes the specified config and then makes
