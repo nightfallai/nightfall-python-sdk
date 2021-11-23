@@ -238,15 +238,16 @@ class Nightfall:
         """
 
         now = datetime.now()
-        if now-timedelta(minutes=5) <= datetime.fromtimestamp(int(request_timestamp)) <= now:
-            raise NightfallUserError("could not validate timestamp is within the last few minutes", 40000)
+        request_datetime = datetime.fromtimestamp(int(request_timestamp))
+        if request_datetime < now-timedelta(minutes=5) or request_datetime > now:
+            return False
         computed_signature = hmac.new(
             self.signing_secret.encode(),
             msg=F"{request_timestamp}:{request_data}".encode(),
             digestmod=hashlib.sha256
         ).hexdigest().lower()
         if computed_signature != request_signature:
-            raise NightfallUserError("could not validate signature of inbound request!", 40000)
+            return False
         return True
 
 
