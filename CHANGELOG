@@ -3,6 +3,16 @@ Changelog
 
 Here you can see the full list of changes between each Nightfall release.
 
+Version 1.1.0
+-------------
+
+Released on November 22, 2021
+
+- *[BACKWARDS INCOMPATIBLE]* `validate_webhook` returns False instead of
+  throwing an exception if the request is invalid
+- Added optional context byte setting to scan_text
+- Updated Docutils to 0.18
+
 Version 1.0.3
 -------------
 
