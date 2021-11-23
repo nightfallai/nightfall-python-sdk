@@ -52,7 +52,8 @@ class Nightfall:
         self.logger = logging.getLogger(__name__)
 
     def scan_text(self, texts: List[str], detection_rules: Optional[List[DetectionRule]] = None,
-                  detection_rule_uuids: Optional[List[str]] = None) -> Tuple[List[List[Finding]], List[str]]:
+                  detection_rule_uuids: Optional[List[str]] = None, context_bytes: Optional[int] = None) ->\
+            Tuple[List[List[Finding]], List[str]]:
         """Scan text with Nightfall.
 
         This method takes the specified config and then makes
@@ -67,6 +68,8 @@ class Nightfall:
         :param detection_rule_uuids: List of detection rule UUIDs to scan each text with.
             These can be created in the Nightfall UI.
         :type detection_rule_uuids: List[str] or None
+        :param context_bytes: The number of bytes of context (leading and trailing) to return with any matched findings.
+        :type context_bytes: int or None
         :returns: list of findings, list of redacted input texts
         """
 
@@ -78,6 +81,8 @@ class Nightfall:
             config["detectionRuleUUIDs"] = detection_rule_uuids
         if detection_rules:
             config["detectionRules"] = [d.as_dict() for d in detection_rules]
+        if context_bytes:
+            config["contextBytes"] = context_bytes
         request_body = {
             "payload": texts,
             "config": config

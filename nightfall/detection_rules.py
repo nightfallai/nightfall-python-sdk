@@ -182,7 +182,7 @@ class Detector:
         context_rules (List[ContextRule] or None): The context rules to use to customize the behavior of this detector.
         exclusion_rules (List[ExclusionRule] or None): The exclusion rules to use to customize the behavior of this
             detector.
-        redaction_config (RedactionConfig or None): Sets the redaction configuration to-be-applied to this detector.
+        redaction_config (RedactionConfig or None): The redaction configuration to-be-applied to this detector.
             This configuration is currently only supported for scanning plaintext, not for file scanning.
     """
     min_confidence: Confidence
