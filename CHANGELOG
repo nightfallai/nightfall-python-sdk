@@ -3,6 +3,14 @@ Changelog
 
 Here you can see the full list of changes between each Nightfall release.
 
+Version 1.1.1
+-------------
+
+Released on November 29, 2021
+
+- Add CONTRIBUTING, CODEOWNERS and update README
+- Update User-Agent header
+
 Version 1.1.0
 -------------
 
@@ -52,19 +60,19 @@ Version 0.6.0
 
 Released on July 25, 2021
 
-- Update scan and chunking interface to handle dict with multiple items 
+- Update scan and chunking interface to handle dict with multiple items
   instead of list of dicts.
 
 .. warning::
-    This is a breaking change compared to version 0.5.0, but all users are 
+    This is a breaking change compared to version 0.5.0, but all users are
     reccomended to upgrade to this version. This version represents an
     improvement on the previous iteration where instead of handling a list of
     dicts, we now handle a single dict with mulitple entries. This simplifies
     the library code and makes the interface much more usable.
 
-    The previous version of the SDK required users to pass in a list of dicts. 
-    We now require users to pass in a single dict with multiple entries. 
-    ``nightfall.scan([{'id': 'string}])`` should now be 
+    The previous version of the SDK required users to pass in a list of dicts.
+    We now require users to pass in a single dict with multiple entries.
+    ``nightfall.scan([{'id': 'string}])`` should now be
     ``nightfall.scan({'id': 'string'})``.
 
 Version 0.5.0
@@ -92,8 +100,8 @@ Version 0.4.0
 Released on June 20, 2021
 
 - Add debug logs to Nightfall module
-- Change primary class name from ``Api`` to ``Nightfall`` to make things a bit 
-  more clear when this library is used in other programs and allow ``from 
+- Change primary class name from ``Api`` to ``Nightfall`` to make things a bit
+  more clear when this library is used in other programs and allow ``from
   nightfall import Nightfall``
 
 .. warning::

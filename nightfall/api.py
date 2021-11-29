@@ -45,7 +45,7 @@ class Nightfall:
 
         self._headers = {
             "Content-Type": "application/json",
-            "User-Agent": "nightfall-python-sdk/1.1.0",
+            "User-Agent": "nightfall-python-sdk/1.1.1",
             'Authorization': f'Bearer {self.key}',
         }
         self.signing_secret = signing_secret
