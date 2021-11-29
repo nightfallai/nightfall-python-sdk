@@ -1,6 +1,6 @@
 # Contributing
 
-Thank you for considering contributing to the Nightfall Java SDK.
+Thank you for considering contributing to the Nightfall Python SDK.
 
 There are many ways to contribute, such as:
 * Writing code samples
@@ -13,7 +13,7 @@ to address those issues.
 
 ## Responsibilities
 * Ensure cross-platform compatibility for every change that's accepted. Windows, Mac, Debian & Ubuntu Linux, etc.
-* Ensure backwards compatibility with Java 8
+* Ensure backwards compatibility with Python 3.7+.
 * Create issues for each major change and enhancement that you wish to make.
 * Discuss proposed changes transparently and collect community feedback.
 * Avoid introducing new external dependencies whenever possible. When absolutely required, validate the software
@@ -21,7 +21,7 @@ licenses used by these dependencies (e.g. avoid unintentional copyleft requireme
 
 ## How to report a bug
 
-### Security Disclosures 
+### Security Disclosures
 If you find a security vulnerability, do NOT open an issue. Email `security@nightfall.ai` instead.
 
 In order to determine whether you are dealing with a security issue, ask yourself the following questions:

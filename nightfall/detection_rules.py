@@ -124,6 +124,7 @@ class MaskConfig:
             "charsToIgnore": self.chars_to_ignore
         }
 
+
 @dataclass
 class RedactionConfig:
     """An object that configures how any detected findings should be redacted when returned to the client. When this

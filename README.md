@@ -1,6 +1,6 @@
 # Nightfall Python SDK
 
-**Embed Nightfall scanning and detection functionality into Java applications**
+**Embed Nightfall scanning and detection functionality into Python applications**
 
 [![PyPI version](https://badge.fury.io/py/nightfall.svg)](https://badge.fury.io/py/nightfall)
 
@@ -104,17 +104,14 @@ print("started scan", id, message)
 ## Contributing
 
 Contributions are welcome! Open a pull request to fix a bug, or open an issue to discuss a new feature
-or change. Please adhere to the linting criteria defined in `checkstyle.xml`, and be sure to add unit
-tests for any new functionality you add.
+or change. Please adhere to the linting criteria expected by flake8, and be sure to add unit tests for
+any new functionality you add.
 
 Refer to `CONTRIBUTING.md` for the full details.
 
 ## License
 
 This code is licensed under the terms of the MIT License. See [here](https://opensource.org/licenses/MIT)
-for more information.
-
-Java is licensed by Oracle. See [here](https://www.oracle.com/java/technologies/javase/jdk-faqs.html)
 for more information.
 
 Please create an issue with a description of your problem, or open a pull request with the fix.
