@@ -1,44 +1,122 @@
 # Nightfall Python SDK
 
-This is a python SDK for working with the Nightfall API.
+**Embed Nightfall scanning and detection functionality into Python applications**
 
 [![PyPI version](https://badge.fury.io/py/nightfall.svg)](https://badge.fury.io/py/nightfall)
 
+##  Features
 
-## Installation 
+This SDK provides Python functions for interacting with the Nightfall API. It allows you to add functionality to your
+applications to scan plain text and files in order to detect different categories of information. You can leverage any
+of the detectors in Nightfall's pre-built library, or you may programmatically define your own custom detectors.
 
-This module requires Python 3.7 or higher.
+Additionally, this library provides convenience features such as encapsulating the steps to chunk and upload files.
+
+To obtain an API Key, login to the [Nightfall dashboard](https://app.nightfall.ai/) and click the section
+titled "Manage API Keys".
+
+See our [developer documentation](https://docs.nightfall.ai/docs/entities-and-terms-to-know) for more details about
+integrating with the Nightfall API.
+
+## Dependencies
+
+The Nightfall Python SDK requires Python 3.7 or later.
+
+For a full list of external dependencies please consult `setup.py`.
+
+
+## Installation
 
 ```
 pip install nightfall
 ```
 
-## Quickstart 
+## Usage
 
-Make a new [API Token](https://app.nightfall.ai/api/) in Nightfall and store the value as an environment variable.
+
+### Scanning Plain Text
+
+Nightfall provides pre-built detector types, covering data types ranging from PII to PHI to credentials. The following
+snippet shows an example of how to scan using pre-built detectors.
+
+####  Sample Code
 
 ```python
-import os
-
 from nightfall import Confidence, DetectionRule, Detector, Nightfall
 
-nightfall = Nightfall(os.getenv('NIGHTFALL_API_KEY'))
+# By default, the client reads the API key from the environment variable NIGHTFALL_API_KEY
+nightfall = Nightfall()
+
+# A rule contains a set of detectors to scan with
+detection_rule = DetectionRule([
+    Detector(min_confidence=Confidence.LIKELY, nightfall_detector="CREDIT_CARD_NUMBER"),
+    Detector(min_confidence=Confidence.POSSIBLE, nightfall_detector="US_SOCIAL_SECURITY_NUMBER"),
+])
 
 findings, _ = nightfall.scan_text(
-        ["4916-6734-7572-5015 is my credit card number"],
-        [DetectionRule(
-            [Detector(min_confidence=Confidence.LIKELY,
-                     nightfall_detector="CREDIT_CARD_NUMBER")])])
+        ["hello world", "my SSN is 678-99-8212", "4242-4242-4242-4242"],
+        [detection_rule]
+)
+
 print(findings)
 ```
+### Scanning Files
 
-For more information on the details of this library, please refer to 
-the [API Documentation](https://docs.nightfall.ai/).
+Scanning common file types like PDF's or office documents typically requires cumbersome text
+extraction methods like OCR.
+
+Rather than implementing this functionality yourself, the Nightfall API allows you to upload the
+original files, and then we'll handle the heavy lifting.
+
+The file upload process is implemented as a series of requests to upload the file in chunks. The library
+provides a single method that wraps the steps required to upload your file. Please refer to the
+[API Reference](https://docs.nightfall.ai/reference) for more details.
+
+The file is uploaded synchronously, but as files can be arbitrarily large, the scan itself is conducted asynchronously.
+The results from the scan are delivered by webhook; for more information about setting up a webhook server, refer to
+[the docs](https://docs.nightfall.ai/docs/creating-a-webhook-server).
+
+#### Sample Code
+
+```python
+from nightfall import Confidence, DetectionRule, Detector, Nightfall
+
+# By default, the client reads the API key from the environment variable NIGHTFALL_API_KEY
+nightfall = Nightfall()
+
+# A rule contains a set of detectors to scan with
+detection_rule = DetectionRule([
+    Detector(min_confidence=Confidence.LIKELY, nightfall_detector="CREDIT_CARD_NUMBER"),
+    Detector(min_confidence=Confidence.POSSIBLE, nightfall_detector="US_SOCIAL_SECURITY_NUMBER"),
+])
+
+
+# Upload the file and start the scan.
+# These are conducted asynchronously, so provide a webhook route to an HTTPS server to send results to.
+id, message = nightfall.scan_file(
+    "./super-secret-credit-cards.pdf",
+    "https://my-service.com/nightfall/listener",
+    detection_rules=[detection_rule]
+)
+print("started scan", id, message)
+```
+
 ## Contributing
 
-Please create an issue with a description of your problem, or open a pull request with the fix. 
+Contributions are welcome! Open a pull request to fix a bug, or open an issue to discuss a new feature
+or change. Please adhere to the linting criteria expected by flake8, and be sure to add unit tests for
+any new functionality you add.
 
-## Development 
+Refer to `CONTRIBUTING.md` for the full details.
+
+## License
+
+This code is licensed under the terms of the MIT License. See [here](https://opensource.org/licenses/MIT)
+for more information.
+
+Please create an issue with a description of your problem, or open a pull request with the fix.
+
+## Development
 
 ### Installing Development Dependencies
 
@@ -58,19 +136,15 @@ Unit and Integration tests can be found in the `tests/` directory. You can run t
 
 You can view the code coverage report by running `coverage html` and `python3 -m http.server --directory htmlcov` after running the unit tests.
 
-### Creating a Release 
+### Creating a Release
 
-Releases are automatically published to PyPI using GitHub Actions. Creating a release in GitHub will trigger a new build that will publish the latest version of this library to [PyPI](https://pypi.org/project/nightfall/). 
+Releases are automatically published to PyPI using GitHub Actions. Creating a release in GitHub will trigger a new build that will publish the latest version of this library to [PyPI](https://pypi.org/project/nightfall/).
 
-The steps to do this are: 
+The steps to do this are:
 
 1. Add what changed to the CHANGELOG file
 2. Update the version in `setup.py`
-3. Commit changes and push to the main branch. 
-4. Create a new release in the GitHub UI. 
-5. Observe the release action succeed and see the latest version of this library on PyPI. 
-## License 
-
-MIT
-
+3. Commit changes and push to the main branch.
+4. Create a new release in the GitHub UI.
+5. Observe the release action succeed and see the latest version of this library on PyPI.
 
