@@ -263,20 +263,19 @@ def test_scan_file(tmpdir):
     responses.add(responses.POST, 'https://api.nightfall.ai/v3/upload/1/scan', status=200,
                   json={"id": 1, "message": "scan_started"})
 
-    id, message = nightfall.scan_file(file, "https://my-website.example/callback", detection_rule_uuids=["a_uuid"])
+    id, message = nightfall.scan_file(file, "https://my-website.example/callback", detection_rule_uuids=["a_uuid"], request_metadata="some test data")
 
     assert len(responses.calls) == 5
     for call in responses.calls:
         assert call.request.headers.get("Authorization") == "Bearer NF-NOT_REAL"
 
     assert responses.calls[0].request.body == '{"fileSizeBytes": 44}'
-    assert responses.calls[1].request.body == "4916-6734-7572-5015 is"
+    assert responses.calls[1].request.body == b"4916-6734-7572-5015 is"
     assert responses.calls[1].request.headers.get("X-UPLOAD-OFFSET") == '0'
-    assert responses.calls[2].request.body == " my credit card number"
+    assert responses.calls[2].request.body == b" my credit card number"
     assert responses.calls[2].request.headers.get("X-UPLOAD-OFFSET") == '22'
     assert responses.calls[4].request.body == '{"policy": {"webhookURL": "https://my-website.example/callback", ' \
-                                              '"detectionRuleUUIDs": ["a_uuid"]}}'
-
+                                              '"detectionRuleUUIDs": ["a_uuid"]}, "requestMetadata": "some test data"}'
     assert id == 1
     assert message == "scan_started"
 

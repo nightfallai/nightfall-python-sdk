@@ -119,7 +119,7 @@ class Nightfall:
     def scan_file(self, location: str, webhook_url: Optional[str] = None, policy_uuid: Optional[str] = None,
                   detection_rules: Optional[List[DetectionRule]] = None,
                   detection_rule_uuids: Optional[List[str]] = None,
-                  request_metadata: Optional[Dict[str, str]] = None) -> Tuple[str, str]:
+                  request_metadata: Optional[str] = None) -> Tuple[str, str]:
         """Scan file with Nightfall.
         At least one of policy_uuid, detection_rule_uuids or detection_rules is required.
 
@@ -131,6 +131,8 @@ class Nightfall:
         :type detection_rules: List[DetectionRule] or None
         :param detection_rule_uuids: list of detection rule UUIDs.
         :type detection_rule_uuids: List[str] or None
+        :param request_metadata: additional metadata that will be returned with the webhook response
+        :type request_metadata: str or None
         :returns: (scan_id, message)
         """
 
@@ -201,8 +203,7 @@ class Nightfall:
 
     def _file_scan_scan(self, session_id: str, detection_rules: Optional[List[DetectionRule]] = None,
                         detection_rule_uuids: Optional[List[str]] = None, webhook_url: Optional[str] = None,
-                        policy_uuid: Optional[str] = None, request_metadata: Optional[Dict[str, str]] = None) \
-            -> requests.Response:
+                        policy_uuid: Optional[str] = None, request_metadata: Optional[str] = None) -> requests.Response:
         if policy_uuid:
             data = {"policyUUID": policy_uuid}
         else:
