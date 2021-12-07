@@ -4,11 +4,9 @@ nightfall.api
 ~~~~~~~~~~~~~
     This module provides a class which abstracts the Nightfall REST API.
 """
-import time
 from datetime import datetime, timedelta
 import hmac
 import hashlib
-import json
 import logging
 import os
 from typing import Dict, List, Tuple, Optional
@@ -103,7 +101,7 @@ class Nightfall:
         return findings, parsed_response.get("redactedPayload")
 
     def _scan_text_v3(self, data: dict):
-        response = self.session.post(url=self.TEXT_SCAN_ENDPOINT_V3, data=json.dumps(data))
+        response = self.session.post(url=self.TEXT_SCAN_ENDPOINT_V3, json=data)
 
         self.logger.debug(f"HTTP Request URL: {response.request.url}")
         self.logger.debug(f"HTTP Request Body: {response.request.body}")
@@ -166,7 +164,7 @@ class Nightfall:
         data = {
             "fileSizeBytes": os.path.getsize(location)
         }
-        response = self.session.post(url=self.FILE_SCAN_INITIALIZE_ENDPOINT, data=json.dumps(data))
+        response = self.session.post(url=self.FILE_SCAN_INITIALIZE_ENDPOINT, json=data)
 
         return response
 
@@ -216,7 +214,7 @@ class Nightfall:
         if request_metadata:
             data["requestMetadata"] = request_metadata
 
-        response = self.session.post(url=self.FILE_SCAN_SCAN_ENDPOINT.format(session_id), data=json.dumps(data))
+        response = self.session.post(url=self.FILE_SCAN_SCAN_ENDPOINT.format(session_id), json=data)
         return response
 
     def validate_webhook(self, request_signature: str, request_timestamp: str, request_data: str) -> bool:

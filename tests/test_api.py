@@ -269,16 +269,48 @@ def test_scan_file(tmpdir):
     for call in responses.calls:
         assert call.request.headers.get("Authorization") == "Bearer NF-NOT_REAL"
 
-    assert responses.calls[0].request.body == '{"fileSizeBytes": 44}'
+    assert responses.calls[0].request.body == b'{"fileSizeBytes": 44}'
     assert responses.calls[1].request.body == b"4916-6734-7572-5015 is"
     assert responses.calls[1].request.headers.get("X-UPLOAD-OFFSET") == '0'
     assert responses.calls[2].request.body == b" my credit card number"
     assert responses.calls[2].request.headers.get("X-UPLOAD-OFFSET") == '22'
-    assert responses.calls[4].request.body == '{"policy": {"webhookURL": "https://my-website.example/callback", ' \
-                                              '"detectionRuleUUIDs": ["a_uuid"]}, "requestMetadata": "some test data"}'
+    assert responses.calls[4].request.body == b'{"policy": {"webhookURL": "https://my-website.example/callback", ' \
+                                              b'"detectionRuleUUIDs": ["a_uuid"]}, "requestMetadata": "some test data"}'
     assert id == 1
     assert message == "scan_started"
 
+
+@responses.activate
+def test_file_scan_upload_short(tmpdir):
+    file = tmpdir.mkdir("test_data").join("file.txt")
+
+    file.write("4916-6734-7572-5015 is my credit card number")
+
+    nightfall = Nightfall("NF-NOT_REAL")
+
+    responses.add(responses.PATCH, 'https://api.nightfall.ai/v3/upload/1', status=204)
+
+    assert nightfall._file_scan_upload(1, file, 200)
+    assert len(responses.calls) == 1
+
+
+@responses.activate
+def test_file_scan_upload_long(tmpdir):
+    file = tmpdir.mkdir("test_data").join("file.txt")
+    test_str = b"4916-6734-7572-5015 is my credit card number"
+    file.write_binary(test_str)
+
+    responses.add(responses.PATCH, 'https://api.nightfall.ai/v3/upload/1', status=204)
+
+    nightfall = Nightfall("NF-NOT_REAL")
+
+    assert nightfall._file_scan_upload(1, file, 1)
+    assert len(responses.calls) == 44
+    for i, call in enumerate(responses.calls):
+        assert call.request.headers.get("Authorization") == "Bearer NF-NOT_REAL"
+        assert call.request.body.decode('utf-8') == test_str.decode('utf-8')[i]
+        assert call.request.headers.get("X-UPLOAD-OFFSET") == str(i)
+        
 
 @freeze_time("2021-10-04T17:30:50Z")
 def test_validate_webhook(nightfall):
