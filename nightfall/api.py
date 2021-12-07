@@ -187,7 +187,7 @@ class Nightfall:
             )
             return response
 
-        with open(location) as fp:
+        with open(location, 'rb') as fp:
             for ix, piece in read_chunks(fp, chunk_size):
                 headers = self._headers
                 headers["X-UPLOAD-OFFSET"] = str(ix * chunk_size)
