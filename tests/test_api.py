@@ -275,7 +275,7 @@ def test_scan_file(tmpdir):
     assert responses.calls[2].request.body == " my credit card number"
     assert responses.calls[2].request.headers.get("X-UPLOAD-OFFSET") == '22'
     assert responses.calls[4].request.body == '{"policy": {"webhookURL": "https://my-website.example/callback", ' \
-                                              '"detectionRuleUUIDs": ["a_uuid"]}} '
+                                              '"detectionRuleUUIDs": ["a_uuid"]}}'
 
     assert id == 1
     assert message == "scan_started"
