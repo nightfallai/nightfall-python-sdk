@@ -13,4 +13,5 @@ autopep8
 pytest
 pytest-cov
 requests
+responses
 freezegun
