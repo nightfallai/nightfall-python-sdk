@@ -11,8 +11,7 @@ import hashlib
 import json
 import logging
 import os
-from functools import wraps
-from typing import List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -119,7 +118,8 @@ class Nightfall:
 
     def scan_file(self, location: str, webhook_url: Optional[str] = None, policy_uuid: Optional[str] = None,
                   detection_rules: Optional[List[DetectionRule]] = None,
-                  detection_rule_uuids: Optional[List[str]] = None) -> Tuple[str, str]:
+                  detection_rule_uuids: Optional[List[str]] = None,
+                  request_metadata: Optional[Dict[str, str]] = None) -> Tuple[str, str]:
         """Scan file with Nightfall.
         At least one of policy_uuid, detection_rule_uuids or detection_rules is required.
 
@@ -153,7 +153,8 @@ class Nightfall:
         response = self._file_scan_scan(session_id,
                                         detection_rules=detection_rules,
                                         detection_rule_uuids=detection_rule_uuids,
-                                        webhook_url=webhook_url, policy_uuid=policy_uuid)
+                                        webhook_url=webhook_url, policy_uuid=policy_uuid,
+                                        request_metadata=request_metadata)
         _validate_response(response, 200)
         parsed_response = response.json()
 
@@ -200,7 +201,8 @@ class Nightfall:
 
     def _file_scan_scan(self, session_id: str, detection_rules: Optional[List[DetectionRule]] = None,
                         detection_rule_uuids: Optional[List[str]] = None, webhook_url: Optional[str] = None,
-                        policy_uuid: Optional[str] = None) -> requests.Response:
+                        policy_uuid: Optional[str] = None, request_metadata: Optional[Dict[str, str]] = None) \
+            -> requests.Response:
         if policy_uuid:
             data = {"policyUUID": policy_uuid}
         else:
@@ -209,6 +211,9 @@ class Nightfall:
                 data["policy"]["detectionRuleUUIDs"] = detection_rule_uuids
             if detection_rules:
                 data["policy"]["detectionRules"] = [d.as_dict() for d in detection_rules]
+
+        if request_metadata:
+            data["requestMetadata"] = request_metadata
 
         response = self.session.post(url=self.FILE_SCAN_SCAN_ENDPOINT.format(session_id), data=json.dumps(data))
         return response
