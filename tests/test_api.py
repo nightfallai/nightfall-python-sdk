@@ -292,6 +292,9 @@ def test_file_scan_upload_short(tmpdir):
 
     assert nightfall._file_scan_upload(1, file, 200)
     assert len(responses.calls) == 1
+    assert responses.calls[0].request.headers.get("Authorization") == "Bearer NF-NOT_REAL"
+    assert responses.calls[0].request.body == b"4916-6734-7572-5015 is my credit card number"
+    assert responses.calls[0].request.headers.get("X-UPLOAD-OFFSET") == "0"
 
 
 @responses.activate
@@ -310,7 +313,7 @@ def test_file_scan_upload_long(tmpdir):
         assert call.request.headers.get("Authorization") == "Bearer NF-NOT_REAL"
         assert call.request.body.decode('utf-8') == test_str.decode('utf-8')[i]
         assert call.request.headers.get("X-UPLOAD-OFFSET") == str(i)
-        
+
 
 @freeze_time("2021-10-04T17:30:50Z")
 def test_validate_webhook(nightfall):
