@@ -9,7 +9,7 @@ import hmac
 import hashlib
 import logging
 import os
-from typing import Dict, List, Tuple, Optional
+from typing import List, Tuple, Optional
 
 import requests
 from requests.adapters import HTTPAdapter
