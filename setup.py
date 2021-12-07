@@ -32,6 +32,7 @@ setup(
     packages=find_packages(exclude=['tests*']),
     install_requires=[
         'requests',
+        'urllib3'
     ],
     python_requires='>=3.7.*'
 )

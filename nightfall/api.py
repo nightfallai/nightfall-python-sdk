@@ -4,15 +4,19 @@ nightfall.api
 ~~~~~~~~~~~~~
     This module provides a class which abstracts the Nightfall REST API.
 """
+import time
 from datetime import datetime, timedelta
 import hmac
 import hashlib
 import json
 import logging
 import os
+from functools import wraps
 from typing import List, Tuple, Optional
 
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3 import Retry
 
 from nightfall.detection_rules import DetectionRule
 from nightfall.exceptions import NightfallUserError, NightfallSystemError
@@ -43,13 +47,16 @@ class Nightfall:
             raise NightfallUserError("need an API key either in constructor or in NIGHTFALL_API_KEY environment var",
                                      40001)
 
-        self._headers = {
+        self.signing_secret = signing_secret
+        self.logger = logging.getLogger(__name__)
+        self.session = requests.Session()
+        retries = Retry(total=5, allowed_methods=Retry.DEFAULT_ALLOWED_METHODS | {"PATCH", "POST"})
+        self.session.mount('https://', HTTPAdapter(max_retries=retries))
+        self.session.headers = {
             "Content-Type": "application/json",
             "User-Agent": "nightfall-python-sdk/1.1.1",
             'Authorization': f'Bearer {self.key}',
         }
-        self.signing_secret = signing_secret
-        self.logger = logging.getLogger(__name__)
 
     def scan_text(self, texts: List[str], detection_rules: Optional[List[DetectionRule]] = None,
                   detection_rule_uuids: Optional[List[str]] = None, context_bytes: Optional[int] = None) ->\
@@ -97,11 +104,7 @@ class Nightfall:
         return findings, parsed_response.get("redactedPayload")
 
     def _scan_text_v3(self, data: dict):
-        response = requests.post(
-            url=self.TEXT_SCAN_ENDPOINT_V3,
-            headers=self._headers,
-            data=json.dumps(data)
-        )
+        response = self.session.post(url=self.TEXT_SCAN_ENDPOINT_V3, data=json.dumps(data))
 
         self.logger.debug(f"HTTP Request URL: {response.request.url}")
         self.logger.debug(f"HTTP Request Body: {response.request.body}")
@@ -160,11 +163,7 @@ class Nightfall:
         data = {
             "fileSizeBytes": os.path.getsize(location)
         }
-        response = requests.post(
-            url=self.FILE_SCAN_INITIALIZE_ENDPOINT,
-            headers=self._headers,
-            data=json.dumps(data)
-        )
+        response = self.session.post(url=self.FILE_SCAN_INITIALIZE_ENDPOINT, data=json.dumps(data))
 
         return response
 
@@ -180,7 +179,7 @@ class Nightfall:
                 ix = ix + 1
 
         def upload_chunk(id, data, headers):
-            response = requests.patch(
+            response = self.session.patch(
                 url=self.FILE_SCAN_UPLOAD_ENDPOINT.format(id),
                 data=data,
                 headers=headers
@@ -189,18 +188,14 @@ class Nightfall:
 
         with open(location) as fp:
             for ix, piece in read_chunks(fp, chunk_size):
-                headers = self._headers
-                headers["X-UPLOAD-OFFSET"] = str(ix * chunk_size)
+                headers = {"X-UPLOAD-OFFSET": str(ix * chunk_size)}
                 response = upload_chunk(session_id, piece, headers)
                 _validate_response(response, 204)
 
         return True
 
     def _file_scan_finalize(self, session_id: str):
-        response = requests.post(
-            url=self.FILE_SCAN_COMPLETE_ENDPOINT.format(session_id),
-            headers=self._headers
-        )
+        response = self.session.post(url=self.FILE_SCAN_COMPLETE_ENDPOINT.format(session_id))
         return response
 
     def _file_scan_scan(self, session_id: str, detection_rules: Optional[List[DetectionRule]] = None,
@@ -215,11 +210,7 @@ class Nightfall:
             if detection_rules:
                 data["policy"]["detectionRules"] = [d.as_dict() for d in detection_rules]
 
-        response = requests.post(
-            url=self.FILE_SCAN_SCAN_ENDPOINT.format(session_id),
-            headers=self._headers,
-            data=json.dumps(data)
-        )
+        response = self.session.post(url=self.FILE_SCAN_SCAN_ENDPOINT.format(session_id), data=json.dumps(data))
         return response
 
     def validate_webhook(self, request_signature: str, request_timestamp: str, request_data: str) -> bool:
