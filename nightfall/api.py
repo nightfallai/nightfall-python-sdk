@@ -15,7 +15,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3 import Retry
 
-from nightfall.detection_rules import DetectionRule
+from nightfall.detection_rules import DetectionRule, RedactionConfig
 from nightfall.exceptions import NightfallUserError, NightfallSystemError
 from nightfall.findings import Finding
 
@@ -56,7 +56,8 @@ class Nightfall:
         }
 
     def scan_text(self, texts: List[str], detection_rules: Optional[List[DetectionRule]] = None,
-                  detection_rule_uuids: Optional[List[str]] = None, context_bytes: Optional[int] = None) ->\
+                  detection_rule_uuids: Optional[List[str]] = None, context_bytes: Optional[int] = None,
+                  default_redaction_config: Optional[RedactionConfig] = None) ->\
             Tuple[List[List[Finding]], List[str]]:
         """Scan text with Nightfall.
 
@@ -74,6 +75,9 @@ class Nightfall:
         :type detection_rule_uuids: List[str] or None
         :param context_bytes: The number of bytes of context (leading and trailing) to return with any matched findings.
         :type context_bytes: int or None
+        :param default_redaction_config: The default redaction configuration to apply to all detection rules, unless
+            there is a more specific config within a detector.
+        :type default_redaction_config: RedactionConfig or None
         :returns: list of findings, list of redacted input texts
         """
 
@@ -87,6 +91,8 @@ class Nightfall:
             config["detectionRules"] = [d.as_dict() for d in detection_rules]
         if context_bytes:
             config["contextBytes"] = context_bytes
+        if default_redaction_config:
+            config["defaultRedactionConfig"] = default_redaction_config.as_dict()
         request_body = {
             "payload": texts,
             "config": config
