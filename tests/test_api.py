@@ -20,38 +20,56 @@ def nightfall():
 @pytest.mark.integration
 def test_scan_text_detection_rules_v3(nightfall):
     result, redactions = nightfall.scan_text(
-        ["4916-6734-7572-5015 is my credit card number"],
-        detection_rules=[DetectionRule(logical_op=LogicalOp.ANY, detectors=[
-            Detector(min_confidence=Confidence.LIKELY,
-                     min_num_findings=1,
-                     display_name="Credit Card Number",
-                     nightfall_detector="CREDIT_CARD_NUMBER",
-                     context_rules=[ContextRule(regex=Regex("fake regex", is_case_sensitive=False),
-                                                window_before=10, window_after=10,
-                                                fixed_confidence=Confidence.VERY_UNLIKELY)],
-                     exclusion_rules=[ExclusionRule(MatchType.FULL,
-                                                    word_list=WordList(["never", "match"],
-                                                                       is_case_sensitive=True))],
-                     redaction_config=RedactionConfig(remove_finding=False,
-                                                      mask_config=MaskConfig(masking_char='👀',
-                                                                             num_chars_to_leave_unmasked=3,
-                                                                             chars_to_ignore=["-"])),
-                     )])],
+        ["4916-6734-7572-5015 is my credit card number, 489-36-8350 ssn"],
+        detection_rules=[
+            DetectionRule(logical_op=LogicalOp.ANY, detectors=[
+                    Detector(min_confidence=Confidence.LIKELY,
+                             min_num_findings=1,
+                             display_name="Credit Card Number",
+                             nightfall_detector="CREDIT_CARD_NUMBER",
+                             context_rules=[ContextRule(regex=Regex("fake regex", is_case_sensitive=False),
+                                                        window_before=10, window_after=10,
+                                                        fixed_confidence=Confidence.VERY_UNLIKELY)],
+                             exclusion_rules=[ExclusionRule(MatchType.FULL,
+                                                            word_list=WordList(["never", "match"],
+                                                                               is_case_sensitive=True))],
+                             redaction_config=RedactionConfig(remove_finding=False,
+                                                              mask_config=MaskConfig(masking_char='👀',
+                                                                                     num_chars_to_leave_unmasked=3,
+                                                                                     chars_to_ignore=["-"])),
+                             ),
+                    Detector(min_confidence=Confidence.LIKELY, nightfall_detector="US_SOCIAL_SECURITY_NUMBER")])],
         context_bytes=10,
+        default_redaction_config=RedactionConfig(remove_finding=False, substitution_phrase="[REDACTED]")
     )
 
     assert len(result) == 1
+    assert len(result[0]) == 2
+
+    def finding_orderer(f):
+        return f.codepoint_range.start
+
+    result[0].sort(key=finding_orderer)
     assert result[0][0] == Finding(
         "4916-6734-7572-5015",
-        '491👀-👀👀👀👀-👀👀👀👀-👀👀👀👀',
+        "491👀-👀👀👀👀-👀👀👀👀-👀👀👀👀",
         None, " is my cre",
         "Credit Card Number",
         result[0][0].detector_uuid,
         Confidence.VERY_LIKELY,
         Range(0, 19), Range(0, 19),
         [], ["Inline Detection Rule #1"])
+    assert result[0][1] == Finding(
+        "489-36-8350",
+        "[REDACTED]",
+        "d number, ", " ssn",
+        "",
+        result[0][1].detector_uuid,
+        Confidence.VERY_LIKELY,
+        Range(46, 57), Range(46, 57),
+        [], ["Inline Detection Rule #1"])
     assert len(redactions) == 1
-    assert redactions[0] == "491👀-👀👀👀👀-👀👀👀👀-👀👀👀👀 is my credit card number"
+    assert redactions[0] == "491👀-👀👀👀👀-👀👀👀👀-👀👀👀👀 is my credit card number, [REDACTED] ssn"
 
 
 @pytest.mark.filetest
@@ -123,33 +141,80 @@ def test_scan_text():
                                           [
                                               "Inline Detection Rule #1"
                                           ]
+                                  },
+                                  {
+                                      "finding": "489-36-8350",
+                                      "redactedFinding": "[REDACTED]",
+                                      "beforeContext": "d number, ",
+                                      "afterContext": " ssn",
+                                      "detector":
+                                          {
+                                              "name": "",
+                                              "uuid": "e30d9a87-f6c7-46b9-a8f4-16547901e069"
+                                          },
+                                      "confidence": "VERY_LIKELY",
+                                      "location":
+                                          {
+                                              "byteRange":
+                                                  {
+                                                      "start": 46,
+                                                      "end": 57
+                                                  },
+                                              "codepointRange":
+                                                  {
+                                                      "start": 46,
+                                                      "end": 57
+                                                  }
+                                          },
+                                      "redactedLocation":
+                                          {
+                                              "byteRange":
+                                                  {
+                                                      "start": 46,
+                                                      "end": 56
+                                                  },
+                                              "codepointRange":
+                                                  {
+                                                      "start": 46,
+                                                      "end": 56
+                                                  }
+                                          },
+                                      "matchedDetectionRuleUUIDs":
+                                          [],
+                                      "matchedDetectionRules":
+                                          [
+                                              "Inline Detection Rule #1"
+                                          ]
                                   }
                               ]
                           ],
                       "redactedPayload":
                           [
-                              "491👀-👀👀👀👀-👀👀👀👀-👀👀👀👀 is my credit card number"
+                              "491👀-👀👀👀👀-👀👀👀👀-👀👀👀👀 is my credit card number, [REDACTED] ssn"
                           ]
                   })
     result, redactions = nightfall.scan_text(
-        ["4916-6734-7572-5015 is my credit card number"],
-        detection_rules=[DetectionRule(logical_op=LogicalOp.ANY, detectors=[
-            Detector(min_confidence=Confidence.LIKELY,
-                     min_num_findings=1,
-                     display_name="Credit Card Number",
-                     nightfall_detector="CREDIT_CARD_NUMBER",
-                     context_rules=[ContextRule(regex=Regex("fake regex", is_case_sensitive=False),
-                                                window_before=10, window_after=10,
-                                                fixed_confidence=Confidence.VERY_UNLIKELY)],
-                     exclusion_rules=[ExclusionRule(MatchType.FULL,
-                                                    word_list=WordList(["never", "match"],
-                                                                       is_case_sensitive=True))],
-                     redaction_config=RedactionConfig(remove_finding=False,
-                                                      mask_config=MaskConfig(masking_char='👀',
-                                                                             num_chars_to_leave_unmasked=3,
-                                                                             chars_to_ignore=["-"])),
-                     )])],
+        ["4916-6734-7572-5015 is my credit card number, 489-36-8350 ssn"],
+        detection_rules=[
+            DetectionRule(logical_op=LogicalOp.ANY, detectors=[
+                    Detector(min_confidence=Confidence.LIKELY,
+                             min_num_findings=1,
+                             display_name="Credit Card Number",
+                             nightfall_detector="CREDIT_CARD_NUMBER",
+                             context_rules=[ContextRule(regex=Regex("fake regex", is_case_sensitive=False),
+                                                        window_before=10, window_after=10,
+                                                        fixed_confidence=Confidence.VERY_UNLIKELY)],
+                             exclusion_rules=[ExclusionRule(MatchType.FULL,
+                                                            word_list=WordList(["never", "match"],
+                                                                               is_case_sensitive=True))],
+                             redaction_config=RedactionConfig(remove_finding=False,
+                                                              mask_config=MaskConfig(masking_char='👀',
+                                                                                     num_chars_to_leave_unmasked=3,
+                                                                                     chars_to_ignore=["-"])),
+                             ),
+                    Detector(min_confidence=Confidence.LIKELY, nightfall_detector="US_SOCIAL_SECURITY_NUMBER")])],
         context_bytes=10,
+        default_redaction_config=RedactionConfig(remove_finding=False, substitution_phrase="[REDACTED]")
     )
 
     assert len(responses.calls) == 1
@@ -157,7 +222,7 @@ def test_scan_text():
     assert json.loads(responses.calls[0].request.body) == {
         "payload":
             [
-                "4916-6734-7572-5015 is my credit card number"
+                "4916-6734-7572-5015 is my credit card number, 489-36-8350 ssn"
             ],
         "config":
             {
@@ -221,16 +286,31 @@ def test_scan_text():
                                                             ]
                                                     }
                                             }
+                                    },
+                                    {
+                                        "minConfidence": "LIKELY",
+                                        "minNumFindings": 1,
+                                        "nightfallDetector": "US_SOCIAL_SECURITY_NUMBER",
+                                        "detectorType": "NIGHTFALL_DETECTOR"
                                     }
                                 ],
                             "logicalOp": "ANY"
                         }
                     ],
-                "contextBytes": 10
+                "contextBytes": 10,
+                "defaultRedactionConfig":
+                    {
+                        "removeFinding": False,
+                        "substitutionConfig":
+                            {
+                                "substitutionPhrase": "[REDACTED]"
+                            }
+                    }
             }
     }
 
     assert len(result) == 1
+    assert len(result[0]) == 2
     assert result[0][0] == Finding(
         "4916-6734-7572-5015",
         '491👀-👀👀👀👀-👀👀👀👀-👀👀👀👀',
@@ -240,8 +320,17 @@ def test_scan_text():
         Confidence.VERY_LIKELY,
         Range(0, 19), Range(0, 19),
         [], ["Inline Detection Rule #1"])
+    assert result[0][1] == Finding(
+        "489-36-8350",
+        "[REDACTED]",
+        "d number, ", " ssn",
+        "",
+        result[0][1].detector_uuid,
+        Confidence.VERY_LIKELY,
+        Range(46, 57), Range(46, 57),
+        [], ["Inline Detection Rule #1"])
     assert len(redactions) == 1
-    assert redactions[0] == "491👀-👀👀👀👀-👀👀👀👀-👀👀👀👀 is my credit card number"
+    assert redactions[0] == "491👀-👀👀👀👀-👀👀👀👀-👀👀👀👀 is my credit card number, [REDACTED] ssn"
 
 
 def test_scan_text_no_detection_rules():
@@ -263,7 +352,8 @@ def test_scan_file(tmpdir):
     responses.add(responses.POST, 'https://api.nightfall.ai/v3/upload/1/scan', status=200,
                   json={"id": 1, "message": "scan_started"})
 
-    id, message = nightfall.scan_file(file, "https://my-website.example/callback", detection_rule_uuids=["a_uuid"], request_metadata="some test data")
+    id, message = nightfall.scan_file(file, "https://my-website.example/callback", detection_rule_uuids=["a_uuid"],
+                                      request_metadata="some test data")
 
     assert len(responses.calls) == 5
     for call in responses.calls:
