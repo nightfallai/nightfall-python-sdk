@@ -31,7 +31,7 @@ class Finding:
         byte_range (Range): The byte range in which a finding was detected within the item.
         codepoint_range (Range): The codepoint range in which a finding was detected within the item. This differs
             from byte range since a codepoint may contain multiple bytes.
-        commit_hash (str): The hash of the commit in which the finding was found, if known.
+        commit_hash (str): The hash of the commit in which the finding was detected, if known.
         matched_detection_rule_uuids (List[str]): The list of detection rule UUIDs that contained a detector that
             triggered a match.
         matched_detection_rules (List[str]): The list of inline detection rules that contained a detector that triggered
