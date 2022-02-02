@@ -31,6 +31,7 @@ class Finding:
         byte_range (Range): The byte range in which a finding was detected within the item.
         codepoint_range (Range): The codepoint range in which a finding was detected within the item. This differs
             from byte range since a codepoint may contain multiple bytes.
+        commit_hash (str): The hash of the commit in which the finding was found, if known.
         matched_detection_rule_uuids (List[str]): The list of detection rule UUIDs that contained a detector that
             triggered a match.
         matched_detection_rules (List[str]): The list of inline detection rules that contained a detector that triggered
@@ -45,6 +46,7 @@ class Finding:
     confidence: Confidence
     byte_range: Range
     codepoint_range: Range
+    commit_hash: str
     matched_detection_rule_uuids: List[str]
     matched_detection_rules: List[str]
 
@@ -60,6 +62,7 @@ class Finding:
             Confidence[resp["confidence"]],
             Range(resp["location"]["byteRange"]["start"], resp["location"]["byteRange"]["end"]),
             Range(resp["location"]["codepointRange"]["start"], resp["location"]["codepointRange"]["end"]),
+            resp["location"].get("commitHash", ""),
             resp["matchedDetectionRuleUUIDs"],
             resp["matchedDetectionRules"]
         )
