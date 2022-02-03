@@ -333,7 +333,7 @@ def test_scan_text():
     assert redactions[0] == "491👀-👀👀👀👀-👀👀👀👀-👀👀👀👀 is my credit card number, [REDACTED] ssn"
 
 @responses.activate
-def test_scan_text_with_policies():
+def test_scan_text_with_policy_uuids():
     nightfall = Nightfall("NF-NOT_REAL")
     responses.add(responses.POST, 'https://api.nightfall.ai/v3/scan',
                   json={
@@ -388,7 +388,7 @@ def test_scan_text_with_policies():
                               "491👀-👀👀👀👀-👀👀👀👀-👀👀👀👀 is my credit card number, [REDACTED] ssn"
                           ]
                   })
-    result, redactions = nightfall.scan_text_with_policies(
+    result, redactions = nightfall.scan_text_with_policy_uuids(
         ["4916-6734-7572-5015 is my credit card number, 489-36-8350 ssn"],
         ["2388f83f-cd31-4689-971b-4ee94f798281"]
     )

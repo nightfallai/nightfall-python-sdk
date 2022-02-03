@@ -107,7 +107,7 @@ class Nightfall:
         return findings, parsed_response.get("redactedPayload")
 
 
-    def scan_text_with_policies(self, texts: List[str], policy_uuids: List[str] = None) ->\
+    def scan_text_with_policy_uuids(self, texts: List[str], policy_uuids: List[str] = None) ->\
             Tuple[List[List[Finding]], List[str]]:
         """Scan text with Nightfall.
 
