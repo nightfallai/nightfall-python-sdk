@@ -224,7 +224,7 @@ def test_scan_text():
             [
                 "4916-6734-7572-5015 is my credit card number, 489-36-8350 ssn"
             ],
-        "config":
+        "policy":
             {
                 "detectionRules":
                     [
@@ -332,6 +332,90 @@ def test_scan_text():
     assert len(redactions) == 1
     assert redactions[0] == "491👀-👀👀👀👀-👀👀👀👀-👀👀👀👀 is my credit card number, [REDACTED] ssn"
 
+@responses.activate
+def test_scan_text_with_policies():
+    nightfall = Nightfall("NF-NOT_REAL")
+    responses.add(responses.POST, 'https://api.nightfall.ai/v3/scan',
+                  json={
+                      "findings":
+                          [
+                              [
+                                  {
+                                      "finding": "4916-6734-7572-5015",
+                                      "redactedFinding": "491👀-👀👀👀👀-👀👀👀👀-👀👀👀👀",
+                                      "afterContext": " is my cre",
+                                      "detector":
+                                          {
+                                              "name": "Credit Card Number",
+                                              "uuid": "74c1815e-c0c3-4df5-8b1e-6cf98864a454"
+                                          },
+                                      "confidence": "VERY_LIKELY",
+                                      "location":
+                                          {
+                                              "byteRange":
+                                                  {
+                                                      "start": 0,
+                                                      "end": 19
+                                                  },
+                                              "codepointRange":
+                                                  {
+                                                      "start": 0,
+                                                      "end": 19
+                                                  }
+                                          },
+                                      "redactedLocation":
+                                          {
+                                              "byteRange":
+                                                  {
+                                                      "start": 0,
+                                                      "end": 19
+                                                  },
+                                              "codepointRange":
+                                                  {
+                                                      "start": 0,
+                                                      "end": 19
+                                                  }
+                                          },
+                                      "matchedDetectionRuleUUIDs":
+                                          ["0d8efd7b-b87a-478b-984e-9cf5534a46bc"],
+                                      "matchedDetectionRules":
+                                          []
+                                  },
+                              ]
+                          ],
+                      "redactedPayload":
+                          [
+                              "491👀-👀👀👀👀-👀👀👀👀-👀👀👀👀 is my credit card number, [REDACTED] ssn"
+                          ]
+                  })
+    result, redactions = nightfall.scan_text_with_policies(
+        ["4916-6734-7572-5015 is my credit card number, 489-36-8350 ssn"],
+        ["2388f83f-cd31-4689-971b-4ee94f798281"]
+    )
+
+    assert len(responses.calls) == 1
+    assert responses.calls[0].request.headers.get("Authorization") == "Bearer NF-NOT_REAL"
+    assert json.loads(responses.calls[0].request.body) == {
+        "payload":
+            [
+                "4916-6734-7572-5015 is my credit card number, 489-36-8350 ssn"
+            ],
+        "policyUUIDs": ["2388f83f-cd31-4689-971b-4ee94f798281"]
+    }
+
+    assert len(result) == 1
+    assert len(result[0]) == 1
+    assert result[0][0] == Finding(
+        "4916-6734-7572-5015",
+        '491👀-👀👀👀👀-👀👀👀👀-👀👀👀👀',
+        None, " is my cre",
+        "Credit Card Number",
+        result[0][0].detector_uuid,
+        Confidence.VERY_LIKELY,
+        Range(0, 19), Range(0, 19), "",
+        ["0d8efd7b-b87a-478b-984e-9cf5534a46bc"], [])
+    assert len(redactions) == 1
+    assert redactions[0] == "491👀-👀👀👀👀-👀👀👀👀-👀👀👀👀 is my credit card number, [REDACTED] ssn"
 
 def test_scan_text_no_detection_rules():
     nightfall = Nightfall("NF-NOT_REAL")

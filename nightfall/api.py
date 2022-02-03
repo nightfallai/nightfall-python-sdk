@@ -84,18 +84,51 @@ class Nightfall:
         if not detection_rule_uuids and not detection_rules:
             raise NightfallUserError("at least one of detection_rule_uuids or detection_rules required", 40001)
 
-        config = {}
+        policy = {}
         if detection_rule_uuids:
-            config["detectionRuleUUIDs"] = detection_rule_uuids
+            policy["detectionRuleUUIDs"] = detection_rule_uuids
         if detection_rules:
-            config["detectionRules"] = [d.as_dict() for d in detection_rules]
+            policy["detectionRules"] = [d.as_dict() for d in detection_rules]
         if context_bytes:
-            config["contextBytes"] = context_bytes
+            policy["contextBytes"] = context_bytes
         if default_redaction_config:
-            config["defaultRedactionConfig"] = default_redaction_config.as_dict()
+            policy["defaultRedactionConfig"] = default_redaction_config.as_dict()
         request_body = {
             "payload": texts,
-            "config": config
+            "policy": policy
+        }
+        response = self._scan_text_v3(request_body)
+
+        _validate_response(response, 200)
+
+        parsed_response = response.json()
+
+        findings = [[Finding.from_dict(f) for f in item_findings] for item_findings in parsed_response["findings"]]
+        return findings, parsed_response.get("redactedPayload")
+
+
+    def scan_text_with_policies(self, texts: List[str], policy_uuids: List[str] = None) ->\
+            Tuple[List[List[Finding]], List[str]]:
+        """Scan text with Nightfall.
+
+        This method takes the specified config and then makes
+        one or more requests to the Nightfall API for scanning.
+        The maximum supported length of policy_uuids is currently 1.
+
+        :param texts: List of strings to scan.
+        :type texts: List[str]
+        :param policy_uuids: List of policy UUIDs to scan each text with.
+            These can be created in the Nightfall UI.
+        :type policy_uuids: List[str] or None
+        :returns: list of findings, list of redacted input texts
+        """
+
+        if not policy_uuids:
+            raise NightfallUserError("policy_uuids may not be empty", 40001)
+
+        request_body = {
+            "payload": texts,
+            "policyUUIDs": policy_uuids
         }
         response = self._scan_text_v3(request_body)
 
