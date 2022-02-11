@@ -213,7 +213,7 @@ class Detector:
             result["wordList"] = self.word_list.as_dict()
             result["detectorType"] = "WORD_LIST"
         if self.uuid:
-            result["uuid"] = self.uuid
+            result["detectorUUID"] = self.uuid
         if self.display_name:
             result["displayName"] = self.display_name
         if self.context_rules:
