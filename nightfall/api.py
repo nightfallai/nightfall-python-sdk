@@ -55,7 +55,7 @@ class Nightfall:
             'Authorization': f'Bearer {self.key}',
         }
 
-    def scan_text(self, texts: List[str], detection_rules: Optional[List[DetectionRule]] = None,
+    def scan_text(self, texts: List[str], policy_uuids: List[str] = None, detection_rules: Optional[List[DetectionRule]] = None,
                   detection_rule_uuids: Optional[List[str]] = None, context_bytes: Optional[int] = None,
                   default_redaction_config: Optional[RedactionConfig] = None) ->\
             Tuple[List[List[Finding]], List[str]]:
@@ -63,11 +63,16 @@ class Nightfall:
 
         This method takes the specified config and then makes
         one or more requests to the Nightfall API for scanning.
-        At least one of detection_rule_uuids or detection_rules is required.
 
+        A caller must provide exactly one of the following:
+            * a non-empty policy_uuids list (current maximum supported length = 1)
+            * at least one of detection_rule_uuids or detection_rules
 
         :param texts: List of strings to scan.
         :type texts: List[str]
+        :param policy_uuids: List of policy UUIDs to scan each text with.
+            These can be created in the Nightfall UI.
+        :type policy_uuids: List[str] or None
         :param detection_rules: List of detection rules to scan each text with.
         :type detection_rules: List[DetectionRule] or None
         :param detection_rule_uuids: List of detection rule UUIDs to scan each text with.
@@ -81,8 +86,8 @@ class Nightfall:
         :returns: list of findings, list of redacted input texts
         """
 
-        if not detection_rule_uuids and not detection_rules:
-            raise NightfallUserError("at least one of detection_rule_uuids or detection_rules required", 40001)
+        if not policy_uuids and not detection_rule_uuids and not detection_rules:
+            raise NightfallUserError("at least one of policy_uuids, detection_rule_uuids, or detection_rules is required", 40001)
 
         policy = {}
         if detection_rule_uuids:
@@ -93,43 +98,14 @@ class Nightfall:
             policy["contextBytes"] = context_bytes
         if default_redaction_config:
             policy["defaultRedactionConfig"] = default_redaction_config.as_dict()
-        request_body = {
-            "payload": texts,
-            "policy": policy
-        }
-        response = self._scan_text_v3(request_body)
-
-        _validate_response(response, 200)
-
-        parsed_response = response.json()
-
-        findings = [[Finding.from_dict(f) for f in item_findings] for item_findings in parsed_response["findings"]]
-        return findings, parsed_response.get("redactedPayload")
-
-
-    def scan_text_with_policy_uuids(self, texts: List[str], policy_uuids: List[str] = None) ->\
-            Tuple[List[List[Finding]], List[str]]:
-        """Scan text with Nightfall.
-
-        This method takes the specified config and then makes
-        one or more requests to the Nightfall API for scanning.
-        The maximum supported length of policy_uuids is currently 1.
-
-        :param texts: List of strings to scan.
-        :type texts: List[str]
-        :param policy_uuids: List of policy UUIDs to scan each text with.
-            These can be created in the Nightfall UI.
-        :type policy_uuids: List[str] or None
-        :returns: list of findings, list of redacted input texts
-        """
-
-        if not policy_uuids:
-            raise NightfallUserError("policy_uuids may not be empty", 40001)
 
         request_body = {
-            "payload": texts,
-            "policyUUIDs": policy_uuids
+            "payload": texts
         }
+        if policy:
+            request_body["policy"] = policy
+        if policy_uuids:
+            request_body["policyUUIDs"] = policy_uuids
         response = self._scan_text_v3(request_body)
 
         _validate_response(response, 200)

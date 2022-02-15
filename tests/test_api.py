@@ -388,9 +388,9 @@ def test_scan_text_with_policy_uuids():
                               "491👀-👀👀👀👀-👀👀👀👀-👀👀👀👀 is my credit card number, [REDACTED] ssn"
                           ]
                   })
-    result, redactions = nightfall.scan_text_with_policy_uuids(
+    result, redactions = nightfall.scan_text(
         ["4916-6734-7572-5015 is my credit card number, 489-36-8350 ssn"],
-        ["2388f83f-cd31-4689-971b-4ee94f798281"]
+        policy_uuids=["2388f83f-cd31-4689-971b-4ee94f798281"]
     )
 
     assert len(responses.calls) == 1
