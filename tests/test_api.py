@@ -417,7 +417,7 @@ def test_scan_text_with_policy_uuids():
     assert len(redactions) == 1
     assert redactions[0] == "491👀-👀👀👀👀-👀👀👀👀-👀👀👀👀 is my credit card number, [REDACTED] ssn"
 
-def test_scan_text_no_detection_rules():
+def test_scan_text_no_detection_rules_or_policy_uuids():
     nightfall = Nightfall("NF-NOT_REAL")
     with pytest.raises(NightfallUserError):
         nightfall.scan_text(texts=["will", "fail"])
