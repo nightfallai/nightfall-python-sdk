@@ -15,6 +15,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3 import Retry
 
+from nightfall.alerts import AlertConfig
 from nightfall.detection_rules import DetectionRule, RedactionConfig
 from nightfall.exceptions import NightfallUserError, NightfallSystemError
 from nightfall.findings import Finding
@@ -57,7 +58,7 @@ class Nightfall:
 
     def scan_text(self, texts: List[str], policy_uuids: List[str] = None, detection_rules: Optional[List[DetectionRule]] = None,
                   detection_rule_uuids: Optional[List[str]] = None, context_bytes: Optional[int] = None,
-                  default_redaction_config: Optional[RedactionConfig] = None) ->\
+                  default_redaction_config: Optional[RedactionConfig] = None, alert_config: Optional[AlertConfig] = None) ->\
             Tuple[List[List[Finding]], List[str]]:
         """Scan text with Nightfall.
 
@@ -83,6 +84,8 @@ class Nightfall:
         :param default_redaction_config: The default redaction configuration to apply to all detection rules, unless
             there is a more specific config within a detector.
         :type default_redaction_config: RedactionConfig or None
+        :param alert_config: Configures external destinations to fan out alerts to in the event that findings are detected.
+        :type alert_config: AlertConfig or None
         :returns: list of findings, list of redacted input texts
         """
 
@@ -132,7 +135,8 @@ class Nightfall:
     def scan_file(self, location: str, webhook_url: Optional[str] = None, policy_uuid: Optional[str] = None,
                   detection_rules: Optional[List[DetectionRule]] = None,
                   detection_rule_uuids: Optional[List[str]] = None,
-                  request_metadata: Optional[str] = None) -> Tuple[str, str]:
+                  request_metadata: Optional[str] = None,
+                  alert_config: Optional[AlertConfig] = None) -> Tuple[str, str]:
         """Scan file with Nightfall.
         At least one of policy_uuid, detection_rule_uuids or detection_rules is required.
 
@@ -146,6 +150,8 @@ class Nightfall:
         :type detection_rule_uuids: List[str] or None
         :param request_metadata: additional metadata that will be returned with the webhook response
         :type request_metadata: str or None
+        :param alert_config: Configures external destinations to fan out alerts to in the event that findings are detected.
+        :type alert_config: AlertConfig or None
         :returns: (scan_id, message)
         """
 
