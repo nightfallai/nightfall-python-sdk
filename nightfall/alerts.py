@@ -63,10 +63,10 @@ class AlertConfig:
     def as_dict(self):
         result = {}
         if self.slack:
-            result["slack"] = {"target": self.slack.target}
+            result["slack"] = self.slack.as_dict()
         if self.email:
-            result["email"] = {"address": self.email.address}
+            result["email"] = self.email.as_dict()
         if self.url:
-            result["url"] = {"address": self.url.address}
+            result["url"] = self.url.as_dict()
         return result
 

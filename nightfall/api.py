@@ -101,6 +101,8 @@ class Nightfall:
             policy["contextBytes"] = context_bytes
         if default_redaction_config:
             policy["defaultRedactionConfig"] = default_redaction_config.as_dict()
+        if alert_config:
+            policy["alertConfig"] = alert_config.as_dict()
 
         request_body = {
             "payload": texts
@@ -175,7 +177,8 @@ class Nightfall:
                                         detection_rules=detection_rules,
                                         detection_rule_uuids=detection_rule_uuids,
                                         webhook_url=webhook_url, policy_uuid=policy_uuid,
-                                        request_metadata=request_metadata)
+                                        request_metadata=request_metadata,
+                                        alert_config=alert_config)
         _validate_response(response, 200)
         parsed_response = response.json()
 
@@ -222,7 +225,8 @@ class Nightfall:
 
     def _file_scan_scan(self, session_id: str, detection_rules: Optional[List[DetectionRule]] = None,
                         detection_rule_uuids: Optional[List[str]] = None, webhook_url: Optional[str] = None,
-                        policy_uuid: Optional[str] = None, request_metadata: Optional[str] = None) -> requests.Response:
+                        policy_uuid: Optional[str] = None, request_metadata: Optional[str] = None,
+                        alert_config: Optional[AlertConfig] = None) -> requests.Response:
         if policy_uuid:
             data = {"policyUUID": policy_uuid}
         else:
@@ -231,6 +235,8 @@ class Nightfall:
                 data["policy"]["detectionRuleUUIDs"] = detection_rule_uuids
             if detection_rules:
                 data["policy"]["detectionRules"] = [d.as_dict() for d in detection_rules]
+            if alert_config:
+                data["policy"]["alertConfig"] = alert_config.as_dict()
 
         if request_metadata:
             data["requestMetadata"] = request_metadata
