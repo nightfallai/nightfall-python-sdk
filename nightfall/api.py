@@ -230,11 +230,13 @@ class Nightfall:
         if policy_uuid:
             data = {"policyUUID": policy_uuid}
         else:
-            data = {"policy": {"webhookURL": webhook_url}}
+            data = {"policy": {}}
             if detection_rule_uuids:
                 data["policy"]["detectionRuleUUIDs"] = detection_rule_uuids
             if detection_rules:
                 data["policy"]["detectionRules"] = [d.as_dict() for d in detection_rules]
+            if webhook_url:
+                data["policy"]["webhookURL"] = webhook_url
             if alert_config:
                 data["policy"]["alertConfig"] = alert_config.as_dict()
 
