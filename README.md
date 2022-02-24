@@ -55,11 +55,12 @@ detection_rule = DetectionRule([
 
 findings, _ = nightfall.scan_text(
         ["hello world", "my SSN is 678-99-8212", "4242-4242-4242-4242"],
-        [detection_rule]
+        detection_rules=[detection_rule]
 )
 
 print(findings)
 ```
+
 ### Scanning Files
 
 Scanning common file types like PDF's or office documents typically requires cumbersome text
