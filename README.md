@@ -42,24 +42,25 @@ snippet shows an example of how to scan using pre-built detectors.
 ####  Sample Code
 
 ```python
-from nightfall import Confidence, DetectionRule, Detector, Nightfall
+>>> from nightfall import Confidence, DetectionRule, Detector, Nightfall
 
-# By default, the client reads the API key from the environment variable NIGHTFALL_API_KEY
-nightfall = Nightfall()
+>>> # By default, the client reads the API key from the environment variable NIGHTFALL_API_KEY
+>>> nightfall = Nightfall()
 
-# A rule contains a set of detectors to scan with
-detection_rule = DetectionRule([
-    Detector(min_confidence=Confidence.LIKELY, nightfall_detector="CREDIT_CARD_NUMBER"),
-    Detector(min_confidence=Confidence.POSSIBLE, nightfall_detector="US_SOCIAL_SECURITY_NUMBER"),
-])
+>>> # A rule contains a set of detectors to scan with
+>>> cc = Detector(min_confidence=Confidence.LIKELY, nightfall_detector="CREDIT_CARD_NUMBER")
+>>> ssn = Detector(min_confidence=Confidence.POSSIBLE, nightfall_detector="US_SOCIAL_SECURITY_NUMBER")
+>>> detection_rule = DetectionRule([cc, ssn])
 
-findings, _ = nightfall.scan_text(
-        ["hello world", "my SSN is 678-99-8212", "4242-4242-4242-4242"],
-        [detection_rule]
-)
+>>> findings, _ = nightfall.scan_text( ["hello world", "my SSN is 678-99-8212", "4242-4242-4242-4242"], detection_rules=[detection_rule])
 
-print(findings)
+>>> print(findings)
+[[], [Finding(finding='678-99-8212', redacted_finding=...)]]
+
 ```
+
+
+
 ### Scanning Files
 
 Scanning common file types like PDF's or office documents typically requires cumbersome text
@@ -79,26 +80,24 @@ The results from the scan are delivered by webhook; for more information about s
 #### Sample Code
 
 ```python
-from nightfall import Confidence, DetectionRule, Detector, Nightfall
+>>> from nightfall import Confidence, DetectionRule, Detector, Nightfall
+>>> import os
 
-# By default, the client reads the API key from the environment variable NIGHTFALL_API_KEY
-nightfall = Nightfall()
+>>> # By default, the client reads the API key from the environment variable NIGHTFALL_API_KEY
+>>> nightfall = Nightfall()
 
-# A rule contains a set of detectors to scan with
-detection_rule = DetectionRule([
-    Detector(min_confidence=Confidence.LIKELY, nightfall_detector="CREDIT_CARD_NUMBER"),
-    Detector(min_confidence=Confidence.POSSIBLE, nightfall_detector="US_SOCIAL_SECURITY_NUMBER"),
-])
+>>> # A rule contains a set of detectors to scan with
+>>> cc = Detector(min_confidence=Confidence.LIKELY, nightfall_detector="CREDIT_CARD_NUMBER")
+>>> ssn = Detector(min_confidence=Confidence.POSSIBLE, nightfall_detector="US_SOCIAL_SECURITY_NUMBER")
+>>> detection_rule = DetectionRule([cc, ssn])
 
 
-# Upload the file and start the scan.
-# These are conducted asynchronously, so provide a webhook route to an HTTPS server to send results to.
-id, message = nightfall.scan_file(
-    "./super-secret-credit-cards.pdf",
-    "https://my-service.com/nightfall/listener",
-    detection_rules=[detection_rule]
-)
-print("started scan", id, message)
+>>> # Upload the file and start the scan.
+>>> # These are conducted asynchronously, so provide a webhook route to an HTTPS server to send results to.
+>>> id, message = nightfall.scan_file( "./README.md", os.environ["WEBHOOK_ENDPOINT"], detection_rules=[detection_rule])
+>>> print("started scan", id, message)
+started scan...scan initiated
+
 ```
 
 ## Contributing
