@@ -11,6 +11,9 @@ Released on February 23, 2022
 - Added `policy_uuids` option to text scanning api
 - Added `alert_config` option to text and file scanning
 - Added `commitHash` to finding response objects
+- Added `rowRange` and `columnRange` to finding response objects
+- Made some fields `Optional` that were documented to potentially be `None` but not marked as such with types.
+- README examples now run as doctests
 
 Version 1.3.0
 -------------
