@@ -63,7 +63,7 @@ def test_scan_text_detection_rules_v3(nightfall):
         "489-36-8350",
         "[REDACTED]",
         "d number, ", " ssn",
-        "",
+        "US_SOCIAL_SECURITY_NUMBER",
         result[0][1].detector_uuid,
         Confidence.VERY_LIKELY,
         Range(46, 57), Range(46, 57), None, None, "",
