@@ -57,7 +57,7 @@ def test_scan_text_detection_rules_v3(nightfall):
         "Credit Card Number",
         result[0][0].detector_uuid,
         Confidence.VERY_LIKELY,
-        Range(0, 19), Range(0, 19), None, None, "",
+        Range(0, 19), Range(0, 19), None, None, "", "",
         [], ["Inline Detection Rule #1"])
     assert result[0][1] == Finding(
         "489-36-8350",
@@ -66,7 +66,7 @@ def test_scan_text_detection_rules_v3(nightfall):
         "US_SOCIAL_SECURITY_NUMBER",
         result[0][1].detector_uuid,
         Confidence.VERY_LIKELY,
-        Range(46, 57), Range(46, 57), None, None, "",
+        Range(46, 57), Range(46, 57), None, None, "", "",
         [], ["Inline Detection Rule #1"])
     assert len(redactions) == 1
     assert redactions[0] == "491👀-👀👀👀👀-👀👀👀👀-👀👀👀👀 is my credit card number, [REDACTED] ssn"
@@ -334,7 +334,7 @@ def test_scan_text():
         "Credit Card Number",
         result[0][0].detector_uuid,
         Confidence.VERY_LIKELY,
-        Range(0, 19), Range(0, 19),  None, None, "",
+        Range(0, 19), Range(0, 19),  None, None, "", "",
         [], ["Inline Detection Rule #1"])
     assert result[0][1] == Finding(
         "489-36-8350",
@@ -343,7 +343,7 @@ def test_scan_text():
         "",
         result[0][1].detector_uuid,
         Confidence.VERY_LIKELY,
-        Range(46, 57), Range(46, 57), Range(2,4), Range(1,1), "",
+        Range(46, 57), Range(46, 57), Range(2,4), Range(1,1), "", "",
         [], ["Inline Detection Rule #1"])
     assert len(redactions) == 1
     assert redactions[0] == "491👀-👀👀👀👀-👀👀👀👀-👀👀👀👀 is my credit card number, [REDACTED] ssn"
@@ -432,7 +432,7 @@ def test_scan_text_with_policy_uuids():
         "Credit Card Number",
         result[0][0].detector_uuid,
         Confidence.VERY_LIKELY,
-        Range(0, 19), Range(0, 19), None, None, "",
+        Range(0, 19), Range(0, 19), None, None, "", "",
         ["0d8efd7b-b87a-478b-984e-9cf5534a46bc"], [])
     assert len(redactions) == 1
     assert redactions[0] == "491👀-👀👀👀👀-👀👀👀👀-👀👀👀👀 is my credit card number, [REDACTED] ssn"
