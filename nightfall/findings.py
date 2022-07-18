@@ -34,6 +34,7 @@ class Finding:
         row_range (Range): The row in which a finding was detected, if it was in a tabular document. Index starts at 1.
         column_range (Range): The column(s) in which a finding was detected, if it was in a tabular document. Index starts at 1.
         commit_hash (str): The hash of the commit in which the finding was detected, if known.
+        commit_hash (str): The author of the commit in which the finding was detected, if known.
         matched_detection_rule_uuids (List[str]): The list of detection rule UUIDs that contained a detector that
             triggered a match.
         matched_detection_rules (List[str]): The list of inline detection rules that contained a detector that triggered
@@ -51,6 +52,7 @@ class Finding:
     row_range: Optional[Range]
     column_range: Optional[Range]
     commit_hash: str
+    commit_author: str
     matched_detection_rule_uuids: List[str]
     matched_detection_rules: List[str]
 
@@ -69,6 +71,7 @@ class Finding:
             _range_or_none(resp["location"]["rowRange"]),
             _range_or_none(resp["location"]["columnRange"]),
             resp["location"].get("commitHash", ""),
+            resp["location"].get("commitAuthor", ""),
             resp["matchedDetectionRuleUUIDs"],
             resp["matchedDetectionRules"]
         )
