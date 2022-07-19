@@ -52,7 +52,7 @@ class Nightfall:
         self.session.mount('https://', HTTPAdapter(max_retries=retries))
         self.session.headers = {
             "Content-Type": "application/json",
-            "User-Agent": "nightfall-python-sdk/1.4.0",
+            "User-Agent": "nightfall-python-sdk/1.4.1",
             'Authorization': f'Bearer {self.key}',
         }
 

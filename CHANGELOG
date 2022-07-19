@@ -3,6 +3,13 @@ Changelog
 
 Here you can see the full list of changes between each Nightfall release.
 
+Version 1.4.1
+-------------
+
+Released on July 19, 2022
+
+- Added `commitAuthor` to finding response objects
+
 Version 1.4.0
 -------------
 
