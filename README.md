@@ -27,8 +27,14 @@ For a full list of external dependencies please consult `setup.py`.
 
 ## Installation
 
+Python 2
 ```
 pip install nightfall
+```
+
+Python 3
+```
+pip3 install nightfall
 ```
 
 ## Usage
@@ -42,20 +48,20 @@ snippet shows an example of how to scan using pre-built detectors.
 ####  Sample Code
 
 ```python
->>> from nightfall import Confidence, DetectionRule, Detector, Nightfall
+from nightfall import Confidence, DetectionRule, Detector, Nightfall
 
->>> # By default, the client reads the API key from the environment variable NIGHTFALL_API_KEY
->>> nightfall = Nightfall()
+# By default, the client reads the API key from the environment variable NIGHTFALL_API_KEY
+nightfall = Nightfall()
 
->>> # A rule contains a set of detectors to scan with
->>> cc = Detector(min_confidence=Confidence.LIKELY, nightfall_detector="CREDIT_CARD_NUMBER")
->>> ssn = Detector(min_confidence=Confidence.POSSIBLE, nightfall_detector="US_SOCIAL_SECURITY_NUMBER")
->>> detection_rule = DetectionRule([cc, ssn])
+# A rule contains a set of detectors to scan with
+cc = Detector(min_confidence=Confidence.LIKELY, nightfall_detector="CREDIT_CARD_NUMBER")
+ssn = Detector(min_confidence=Confidence.POSSIBLE, nightfall_detector="US_SOCIAL_SECURITY_NUMBER")
+detection_rule = DetectionRule([cc, ssn])
 
->>> findings, _ = nightfall.scan_text( ["hello world", "my SSN is 678-99-8212", "4242-4242-4242-4242"], detection_rules=[detection_rule])
+findings, _ = nightfall.scan_text( ["hello world", "my SSN is 678-99-8212", "4242-4242-4242-4242"], detection_rules=[detection_rule])
 
->>> print(findings)
-[[], [Finding(finding='678-99-8212', redacted_finding=...)]]
+print(findings)
+# Example output: [[], [Finding(finding='678-99-8212', redacted_finding=...)]]
 
 ```
 
@@ -80,23 +86,23 @@ The results from the scan are delivered by webhook; for more information about s
 #### Sample Code
 
 ```python
->>> from nightfall import Confidence, DetectionRule, Detector, Nightfall
->>> import os
+from nightfall import Confidence, DetectionRule, Detector, Nightfall
+import os
 
->>> # By default, the client reads the API key from the environment variable NIGHTFALL_API_KEY
->>> nightfall = Nightfall()
+# By default, the client reads the API key from the environment variable NIGHTFALL_API_KEY
+nightfall = Nightfall()
 
->>> # A rule contains a set of detectors to scan with
->>> cc = Detector(min_confidence=Confidence.LIKELY, nightfall_detector="CREDIT_CARD_NUMBER")
->>> ssn = Detector(min_confidence=Confidence.POSSIBLE, nightfall_detector="US_SOCIAL_SECURITY_NUMBER")
->>> detection_rule = DetectionRule([cc, ssn])
+# A rule contains a set of detectors to scan with
+cc = Detector(min_confidence=Confidence.LIKELY, nightfall_detector="CREDIT_CARD_NUMBER")
+ssn = Detector(min_confidence=Confidence.POSSIBLE, nightfall_detector="US_SOCIAL_SECURITY_NUMBER")
+detection_rule = DetectionRule([cc, ssn])
 
 
->>> # Upload the file and start the scan.
->>> # These are conducted asynchronously, so provide a webhook route to an HTTPS server to send results to.
->>> id, message = nightfall.scan_file( "./README.md", os.environ["WEBHOOK_ENDPOINT"], detection_rules=[detection_rule])
->>> print("started scan", id, message)
-started scan...scan initiated
+# Upload the file and start the scan.
+# These are conducted asynchronously, so provide a webhook route to an HTTPS server to send results to.
+id, message = nightfall.scan_file( "./README.md", os.environ["WEBHOOK_ENDPOINT"], detection_rules=[detection_rule])
+print("started scan", id, message)
+# Example output: started scan...scan initiated
 
 ```
 
@@ -146,4 +152,3 @@ The steps to do this are:
 3. Commit changes and push to the main branch.
 4. Create a new release in the GitHub UI.
 5. Observe the release action succeed and see the latest version of this library on PyPI.
-
