@@ -15,4 +15,4 @@ pytest-cov
 requests
 responses
 freezegun
-importlib-metadata==4.13.0
+importlib-metadata==6.1.0
