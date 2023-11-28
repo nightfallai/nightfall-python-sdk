@@ -1,0 +1,25 @@
+
+name: octocov
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Granting private modules access
+        run: |
+          git config --global url."https://${{ secrets.engbot_token }}:x-oauth-basic@github.com/watchtowerai".insteadOf "https://github.com/watchtowerai"
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v4
+      - name: Run tests with coverage report output
+        # can skip packages with external dependencies (e.g. entity with live DB) with a command like
+        #  ```go test $(go list ./... | grep -v entity) -coverprofile=coverage.out```
+        run: go test $(go list ./... | grep -v /internal/services/entity | grep -v /internal/entities | grep -v /internal/handler | grep -v /internal/services/entity) -coverprofile=coverage.out
+        env:
+          GO_ENV: "test"
+          GOPRIVATE: "github.com/watchtowerai"
+      - uses: k1LoW/octocov-action@v0

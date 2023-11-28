@@ -1,0 +1,21 @@
+coverage:
+  acceptable: current >= 89%
+codeToTestRatio:
+  code:
+    - '**/*.go'
+    - '!**/*_test.go'
+  test:
+    - '**/*_test.go'
+diff:
+  datastores:
+    - artifact://${GITHUB_REPOSITORY}
+push:
+  if: is_default_branch
+comment:
+  if: is_pull_request
+summary:
+  if: true
+report:
+  if: is_default_branch
+  datastores:
+    - artifact://${GITHUB_REPOSITORY}
